@@ -193,6 +193,10 @@ td.num{text-align:left}
 .flowread .g{border-color:var(--long)}.flowread .r{border-color:var(--short)}.flowread .y{border-color:var(--warn)}
 .ibtn{background:none;border:1px solid var(--line);border-radius:5px;padding:1px 7px;cursor:pointer;font-size:12px;color:var(--muted)}
 .ibtn:hover{color:var(--text);border-color:var(--line2)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.h3s{font-size:13px;margin:16px 0 8px}
+.lessons{margin:0;padding-inline-start:18px;font-size:13px;display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto}
+.blog{font-size:12.5px;display:flex;flex-direction:column;gap:4px;max-height:320px;overflow:auto}
 .disclaimer{font-size:11.5px;color:var(--faint);text-align:center}
 .toast{position:fixed;bottom:20px;left:20px;background:var(--panel3);border:1px solid var(--line2);border-radius:8px;padding:10px 14px;max-width:360px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.45)}
 .spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
@@ -291,8 +295,40 @@ td.num{text-align:left}
 </div>
 
 <div>
-  <nav class="tabs" id="tabsNav"><button class="on" data-tab="journal">سجل صفقاتي</button><button data-tab="opt">محسّن الاستراتيجية</button><button data-tab="trades">صفقات المحاكاة</button><button data-tab="settings">الإعدادات والاستراتيجية</button></nav>
-  <div class="tabpane" id="tab-journal">
+  <nav class="tabs" id="tabsNav"><button class="on" data-tab="bot">🤖 الوكيل الورقي</button><button data-tab="journal">سجل صفقاتي</button><button data-tab="opt">محسّن الاستراتيجية</button><button data-tab="trades">صفقات المحاكاة</button><button data-tab="settings">الإعدادات والاستراتيجية</button></nav>
+  <div class="tabpane" id="tab-bot">
+    <div class="panel">
+      <div class="row" style="gap:10px"><span id="bStatus"></span><div class="spacer"></div>
+        <button class="btn primary" id="bToggle">▶ شغّل الوكيل</button><button class="btn ai" id="bRun">⟳ دورة هلق</button></div>
+      <p class="sub" id="bCalls" style="margin:8px 0 0"></p>
+      <p class="note">الوكيل بيفتح صفقات <b>وهمية</b> على أسعار Binance الحقيقية، مع كل شمعة جديدة. بعد كل صفقة بتنسكّر بيكتب درس، وبيقرا الدروس قبل كل قرار جديد. بيشتغل بس والصفحة مفتوحة. وإذا سكّرتها وفتحتها بعدين، بيحسب شو صار بالصفقات المفتوحة وقت ما كانت مسكّرة.</p>
+    </div>
+    <div class="grid2" id="bCards" style="margin-top:12px"></div>
+    <h3 class="h3s">الصفقات المفتوحة</h3>
+    <div class="tablewrap"><table><thead><tr><th>الحساب</th><th>العملة</th><th>الاتجاه</th><th>الدخول</th><th>الستوب</th><th>الهدف الجاي</th><th>الحالي</th><th>الربح $</th><th>R</th><th>رافعة</th><th>الفتح</th><th>السبب</th></tr></thead><tbody id="bOpen"></tbody></table></div>
+    <div class="grid2" style="margin-top:12px">
+      <div class="panel"><h3 class="h3s" style="margin-top:0">📝 دروس الوكيل</h3><ul class="lessons" id="bLessons"></ul></div>
+      <div class="panel"><h3 class="h3s" style="margin-top:0">سجل النشاط</h3><div class="blog" id="bLog"></div></div>
+    </div>
+    <h3 class="h3s">الصفقات المسكّرة</h3>
+    <div class="tablewrap"><table><thead><tr><th>الحساب</th><th>العملة</th><th>الاتجاه</th><th>الفتح</th><th>الإغلاق</th><th>الدخول</th><th>الخروج</th><th>النتيجة</th><th>R</th><th>الربح $</th></tr></thead><tbody id="bClosed"></tbody></table></div>
+    <form class="fs" id="bForm" style="margin-top:14px"><legend>إعدادات الوكيل الورقي</legend><div class="form">
+      <div class="field"><label for="bTf">الفريم</label><select id="bTf" class="sel"><option>5m</option><option>15m</option><option>30m</option><option>1h</option><option>4h</option></select></div>
+      <div class="field"><label for="bSrc">العملات</label><select id="bSrc" class="sel"><option value="watch">قائمتي</option><option value="top">أعلى 25 بالحجم</option></select></div>
+      <div class="field"><label for="bMin">أقل قوة ترند ليسأل الوكيل %</label><input type="number" id="bMin" min="30" max="95"></div>
+      <div class="field"><label for="bMaxOpen">أقصى صفقات مفتوحة</label><input type="number" id="bMaxOpen" min="1" max="10"></div>
+      <div class="field"><label for="bRisk">المخاطرة بكل صفقة %</label><input type="number" id="bRisk" step="0.1" min="0.1" max="5"></div>
+      <div class="field"><label for="bLev">أقصى رافعة</label><input type="number" id="bLev" min="1" max="50"></div>
+      <div class="field"><label for="bMaxCalls">أقصى طلبات AI باليوم</label><input type="number" id="bMaxCalls" min="1" max="500"></div>
+      <div class="field"><label for="bStart">الرصيد الوهمي $ (بيتغير بس قبل أول صفقة)</label><input type="number" id="bStart" min="100"></div>
+      <div class="field check"><input type="checkbox" id="bRules"><label for="bRules">شغّل بوت الإشارات للمقارنة</label></div>
+    </div>
+    <p class="note">كل دورة بتستعمل تقريباً طلب لكل فرصة (حد أقصى 2 بالدورة) وطلب لكل درس. 40 طلب باليوم ≈ دولار تقريباً.</p>
+    <div class="row" style="gap:8px;margin-top:10px"><button class="btn primary" type="submit">احفظ</button><div class="spacer"></div>
+      <label class="field check"><input type="checkbox" id="bKeepLessons" checked><span class="lbl">خلّي الدروس</span></label><button class="btn" type="button" id="bReset">↺ صفّر الحساب</button></div>
+    </form>
+  </div>
+  <div class="tabpane" id="tab-journal" hidden>
     <div class="jstats" id="jStats"></div>
     <div class="row" style="gap:8px;margin:12px 0">
       <button class="btn primary" id="jNew">+ صفقة جديدة</button>
@@ -996,7 +1032,7 @@ function jOpenForm(t){
   const d=t||{}; $("jSym").value=d.sym||S.symbol; $("jSide").value=String(d.dir||1); $("jEntry").value=d.entry??""; $("jSl").value=d.sl??""; $("jTp").value=d.tp??"";
   $("jMargin").value=d.margin??""; $("jLev").value=d.lev??Math.min(CP.lev,10); $("jOpen").value=dtLocal(d.tOpen||Date.now()); $("jExit").value=d.exit??"";
   $("jClose").value=d.tClose?dtLocal(d.tClose):""; $("jSrc").value=d.src||"manual"; $("jNote").value=d.note||"";
-  document.querySelectorAll("#tabsNav button").forEach(x=>x.classList.toggle("on",x.dataset.tab==="journal")); ["journal","opt","trades","settings"].forEach(t=>$("tab-"+t).hidden=t!=="journal");
+  document.querySelectorAll("#tabsNav button").forEach(x=>x.classList.toggle("on",x.dataset.tab==="journal")); ["bot","journal","opt","trades","settings"].forEach(t=>$("tab-"+t).hidden=t!=="journal");
   f.scrollIntoView({behavior:"smooth",block:"start"}); }
 $("jNew").addEventListener("click",()=>jOpenForm(null));
 $("jCancel").addEventListener("click",()=>{ $("jForm").hidden=true; jEdit=null; });
@@ -1036,6 +1072,182 @@ $("jAi").addEventListener("click",async()=>{ const box=$("jAiRes"), b=$("jAi"); 
       ${(d.rules||[]).length?`<p style="margin:8px 0 0;color:var(--warn)"><b>قواعد التزم فيها</b></p><ul>${d.rules.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</div>`; }
   catch(e){ box.innerHTML=`<p class="err">${esc(e.message)}</p>`; } b.disabled=false; });
 
+/* ================= paper trading agent ================= */
+const BOT_DEF={tf:"15m",src:"watch",minStr:60,maxOpen:3,risk:1,lev:10,maxCalls:40,start:1000,rules:true};
+const HTF={"5m":"1h","15m":"1h","30m":"4h","1h":"4h","4h":"1d"};
+function newBot(cfg){ const c=Object.assign({},BOT_DEF,cfg||{}); return {on:false,cfg:c,ai:{bal:c.start,pos:[],closed:[]},rules:{bal:c.start,pos:[],closed:[]},lessons:[],log:[],calls:{day:"",n:0},lastBar:0,lastRun:0,created:Date.now()}; }
+let BOT=store.get("frp_bot",null)||newBot(); BOT.cfg=Object.assign({},BOT_DEF,BOT.cfg);
+const saveBot=()=>store.set("frp_bot",BOT);
+const ACCT={ai:"🤖 الوكيل",rules:"📐 الإشارات"};
+function botLog(kind,text){ BOT.log.unshift({t:Date.now(),kind,text}); BOT.log=BOT.log.slice(0,150); }
+function callsLeft(){ const d=new Date().toDateString(); if(BOT.calls.day!==d) BOT.calls={day:d,n:0}; return BOT.cfg.maxCalls-BOT.calls.n; }
+function useCall(){ callsLeft(); BOT.calls.n++; }
+let botBusy=false, wakeLock=null;
+
+function botOpen(k,sym,dir,entry,sl,tps,lev,meta,lastT){
+  const A=BOT[k], risk=Math.abs(entry-sl); if(!(risk>0)) return null;
+  const qty=Math.min(A.bal*BOT.cfg.risk/100/risk, A.bal*lev/entry);
+  const pos={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),sym,dir,entry,sl,sl0:sl,tps,lev,qty,rem:qty,hit:0,pnl:0,risk,tOpen:Date.now(),lastT,be:false,mfe:0,mae:0,bars:0,lastPx:entry,meta};
+  A.pos.push(pos);
+  const msg=`${ACCT[k]} فتح ${dir>0?"لونغ":"شورت"} ${base(sym)} على ${fp(entry)} · ستوب ${fp(sl,entry)} · ${lev}x${meta&&meta.conf?` · ثقة ${meta.conf}%`:""}`;
+  botLog("open",msg); if(k==="ai") notify("🤖 صفقة ورقية جديدة",msg); return pos;
+}
+function processPos(pos,c,step){
+  const now=Date.now(), fee=P.fee/100, d=pos.dir;
+  const fill=(px,q)=>{ pos.pnl+=q*(px-pos.entry)*d-q*(pos.entry+px)*fee; pos.rem-=q; pos.lastPx=px; };
+  for(const x of c){ if(x.t<=pos.lastT||x.t+step>now) continue;
+    pos.bars++; pos.mfe=Math.max(pos.mfe,(d>0?x.h-pos.entry:pos.entry-x.l)/pos.risk); pos.mae=Math.max(pos.mae,(d>0?pos.entry-x.l:x.h-pos.entry)/pos.risk);
+    pos.lastT=x.t;
+    if(d>0?x.l<=pos.sl:x.h>=pos.sl){ fill(pos.sl,pos.rem); return pos.hit?`هدف ${pos.hit} ثم ${pos.be?"تعادل":"ستوب"}`:"ستوب"; }
+    while(pos.hit<3&&(d>0?x.h>=pos.tps[pos.hit]:x.l<=pos.tps[pos.hit])){ fill(pos.tps[pos.hit],pos.hit===2?pos.rem:pos.qty/3); pos.hit++; if(pos.hit===1){ pos.sl=pos.entry; pos.be=true; } }
+    if(pos.hit===3||pos.rem<=pos.qty*1e-9) return "هدف 3";
+  } return null;
+}
+function botClose(k,pos,reason){
+  const A=BOT[k]; A.bal+=pos.pnl; A.pos=A.pos.filter(p=>p.id!==pos.id);
+  const t={...pos,reason,tClose:Date.now(),R:pos.pnl/(pos.qty*pos.risk),exit:pos.lastPx,lessonDone:k!=="ai"};
+  A.closed.unshift(t); A.closed=A.closed.slice(0,400);
+  const msg=`${ACCT[k]} سكّر ${base(pos.sym)} ${pos.dir>0?"لونغ":"شورت"}: ${reason} · ${t.R>=0?"+":""}${t.R.toFixed(2)}R · ${t.pnl>=0?"+":""}${t.pnl.toFixed(2)}$`;
+  botLog(t.pnl>0?"win":"loss",msg); if(k==="ai") notify("🤖 صفقة ورقية انسكّرت",msg);
+}
+function acctStats(k){ const A=BOT[k], cl=A.closed, w=cl.filter(t=>t.pnl>0), gp=w.reduce((s,t)=>s+t.pnl,0), gl=-cl.filter(t=>t.pnl<=0).reduce((s,t)=>s+t.pnl,0);
+  const unr=A.pos.reduce((s,p)=>{ const px=S.prices[p.sym]; return s+p.pnl+(px?p.rem*(px-p.entry)*p.dir:0); },0);
+  return {n:cl.length,win:cl.length?w.length/cl.length*100:null,pf:gl>0?gp/gl:(gp>0?Infinity:null),avgR:cl.length?cl.reduce((s,t)=>s+t.R,0)/cl.length:null,
+    bal:A.bal,eq:A.bal+unr,net:(A.bal+unr-BOT.cfg.start)/BOT.cfg.start*100,open:A.pos.length}; }
+async function top25(){ if(!S.symbols.length) await loadSymbols(); try{ const all=await getJSON("/fapi/v1/ticker/24hr"), ok=new Set(S.symbols); return all.filter(t=>ok.has(t.symbol)).sort((a,b)=>+b.quoteVolume-+a.quoteVolume).slice(0,25).map(t=>t.symbol); }catch(e){ return WATCH.slice(); } }
+
+const SYS_BOT=`إنت وكيل تداول ورقي (Paper Trading) على Binance USDT-M Futures. الصفقات وهمية بس بتنحسب على أسعار حقيقية، وهدفك تكبّر الرصيد على المدى الطويل وتتعلم من أغلاطك.
+بتاخد لعملة وحدة: شموع، ومؤشرات، واتجاه الفريم الحالي والفريم الأكبر، ودعوم ومقاومات، ونتيجة محرك القواعد، وسجلك، و"دروس" كتبتها إنت من صفقاتك القديمة.
+قواعد:
+- الدخول بيكون ماركت على السعر الحالي (price). ما في أوامر معلّقة.
+- SKIP قرار ممتاز إذا الصورة مو واضحة. ما تفوت إلا إذا الثقة 60 أو أكتر.
+- الستوب لازم يكون منطقي (ورا دعم/مقاومة أو 1-2.5 ATR)، ومسافتو بين 0.2% و 8% من السعر.
+- تلات أهداف: الأول 1R عالأقل، والتالت 2R أو أكتر. تلت الكمية بيطلع على كل هدف، والستوب بينتقل للدخول بعد الهدف الأول.
+- الرافعة بين 1 و max_leverage.
+- **طبّق الدروس** (lessons). إذا في درس بيقول تجنب حالة متل هاي، اعمل SKIP.
+- لا تعاكس اتجاه الفريم الأكبر إلا إذا في سبب قوي جداً.
+- الكتابة باللهجة السورية، مختصرة.
+رجّع JSON بس:
+{"action":"OPEN_LONG|OPEN_SHORT|SKIP","confidence":0-100,"stop_loss":number|null,"take_profit":[n,n,n]|null,"leverage":number|null,"reason":"جملة أو جملتين","tags":["كلمات قصيرة تصف نوع الفرصة"]}`;
+const SYS_LESSON=`إنت وكيل تداول ورقي عم تراجع صفقة سكّرتها. بتاخد: ليش فتتها، وحالة السوق وقتها، والنتيجة، وأقصى ربح (MFE) وأقصى خسارة (MAE) وصلتلهن بوحدات R.
+اكتب درس واحد عملي وقصير (جملة وحدة أو اتنين) باللهجة السورية، بيساعدك تاخد قرار أحسن المرة الجاية: شو تعيد، أو شو تتجنب، أو كيف تعدّل الستوب والأهداف.
+إذا الصفقة ربحت، الدرس بيكون عن شو اللي نجح. إذا خسرت بسبب حظ (فكرة منطقية بس السوق قلب)، قول هيك وما تعمل قاعدة من صفقة وحدة.
+JSON بس: {"lesson":"","tags":[""],"importance":1-5}`;
+
+function botCtx(d,hb,funding){
+  const {sym,c,A}=d, tf=BOT.cfg.tf, L=A.last, px=c[c.length-1].c, dp=decimals(px), r=v=>v==null?null:+(+v).toFixed(dp), r2=v=>v==null?null:+(+v).toFixed(2), lv=srLevels(c,A.a[L]);
+  const st=acctStats("ai"), recent=BOT.ai.closed.slice(0,10).map(t=>({sym:t.sym,side:t.dir>0?"L":"S",R:+t.R.toFixed(2),reason:t.reason,tags:t.meta?.tags}));
+  return { symbol:sym,timeframe:tf,price:r(px),funding_rate_pct:funding?+funding.rate.toFixed(4):null,
+    last_30_closed_candles_OHLCV:c.slice(L-29,L+1).map(x=>[tstr(x.t),r(x.o),r(x.h),r(x.l),r(x.c),Math.round(x.v)]),
+    indicators:{ema_fast:r(A.eF[L]),ema_slow:r(A.eS[L]),ema_trend:r(A.eT[L]),rsi:r2(A.r[L]),macd_hist:+(A.hist[L]||0).toPrecision(4),macd_hist_prev3:A.hist.slice(L-3,L).map(v=>+(v||0).toPrecision(4)),adx:r2(A.adx.adx[L]),plus_di:r2(A.adx.pdi[L]),minus_di:r2(A.adx.mdi[L]),psar_dir:A.sar.dir[L],atr:r(A.a[L]),atr_pct:r2(A.a[L]/px*100)},
+    trend_this_tf:A.bias, trend_higher_tf:hb?{tf:HTF[tf],dir:hb.dir,strength:hb.str,label:hb.label}:null,
+    resistance_levels:lv.res.map(g=>r(g.v)),support_levels:lv.sup.map(g=>r(g.v)),
+    rule_engine:{status:A.bt.pending?(A.bt.pending>0?"NEW_LONG_SIGNAL":"NEW_SHORT_SIGNAL"):"NO_NEW_SIGNAL",long_conditions:A.condL[L],short_conditions:A.condS[L],strategy_backtest_on_this_coin:{trades:A.bt.stats.n,win:A.bt.stats.win,pf:A.bt.stats.pf===Infinity?99:A.bt.stats.pf,avgR:A.bt.stats.avgR}},
+    account:{balance:+st.bal.toFixed(2),start:BOT.cfg.start,open_positions:BOT.ai.pos.map(p=>({sym:p.sym,side:p.dir>0?"L":"S"})),max_leverage:BOT.cfg.lev},
+    my_track_record:{trades:st.n,win_rate:st.win==null?null:+st.win.toFixed(0),profit_factor:st.pf===Infinity?99:st.pf==null?null:+st.pf.toFixed(2),avg_R:st.avgR==null?null:+st.avgR.toFixed(2),last_10:recent},
+    lessons:BOT.lessons.slice(0,15).map(l=>l.text) };
+}
+async function botDecide(d){
+  const {sym,c,A}=d, tf=BOT.cfg.tf, px=c[c.length-1].c;
+  const [hc,funding]=await Promise.all([fetchKlines(sym,HTF[tf],300).catch(()=>null),fetchFunding(sym)]);
+  const hb=hc?analyze(hc,PP(sym,HTF[tf]),true).bias:null;
+  useCall(); let res;
+  try{ res=await callClaude(SYS_BOT,botCtx(d,hb,funding)); }catch(e){ botLog("err",`${base(sym)}: ${e.message}`); return; }
+  const act=res.action, dir=act==="OPEN_LONG"?1:act==="OPEN_SHORT"?-1:0;
+  if(!dir){ botLog("skip",`🤖 ${base(sym)}: تخطّى${res.confidence!=null?` (ثقة ${res.confidence}%)`:""}. ${res.reason||""}`); return; }
+  const sl=+res.stop_loss, tps=(res.take_profit||[]).map(Number).filter(isFinite), dist=Math.abs(px-sl)/px*100;
+  const bad = (res.confidence??0)<60 ? "الثقة أقل من 60%" : !isFinite(sl) ? "ما حط ستوب" : (dir>0?sl>=px:sl<=px) ? "الستوب بالجهة الغلط" : dist<0.15||dist>10 ? `مسافة الستوب ${dist.toFixed(2)}% مو منطقية`
+    : tps.length<3 ? "ما حط 3 أهداف" : tps.some(t=>dir>0?t<=px:t>=px) ? "الأهداف بالجهة الغلط" : null;
+  if(bad){ botLog("skip",`🤖 ${base(sym)}: رفضت صفقة ${dir>0?"لونغ":"شورت"} لأنو ${bad}.`); return; }
+  tps.sort((a,b)=>dir>0?a-b:b-a);
+  const lev=clamp(Math.round(res.leverage||1),1,BOT.cfg.lev);
+  botOpen("ai",sym,dir,px,sl,tps.slice(0,3),lev,{conf:res.confidence,reason:res.reason,tags:res.tags||[],bias:A.bias.label,biasStr:A.bias.str,htf:hb?hb.label:null,rsi:A.r[A.last],signal:A.bt.pending||0},c[c.length-2].t);
+}
+async function botLessons(){
+  const todo=BOT.ai.closed.filter(t=>!t.lessonDone).slice(0,2);
+  for(const t of todo){ if(callsLeft()<=0) return; useCall();
+    try{ const d=await callClaude(SYS_LESSON,{trade:{symbol:t.sym,side:t.dir>0?"LONG":"SHORT",timeframe:BOT.cfg.tf,entry:t.entry,stop:t.sl0,targets:t.tps,leverage:t.lev,
+        why_opened:t.meta?.reason,confidence:t.meta?.conf,tags:t.meta?.tags,trend_at_entry:t.meta?.bias,higher_tf_trend:t.meta?.htf,rsi_at_entry:t.meta?.rsi,rule_signal_at_entry:t.meta?.signal,
+        result:t.reason,R:+t.R.toFixed(2),pnl_usd:+t.pnl.toFixed(2),max_favorable_R:+t.mfe.toFixed(2),max_adverse_R:+t.mae.toFixed(2),candles_held:t.bars},
+        existing_lessons:BOT.lessons.slice(0,15).map(l=>l.text)});
+      if(d.lesson){ BOT.lessons.unshift({t:Date.now(),sym:t.sym,dir:t.dir,R:t.R,text:d.lesson,tags:d.tags||[],imp:d.importance||3}); BOT.lessons=BOT.lessons.slice(0,25); botLog("lesson",`درس من ${base(t.sym)}: ${d.lesson}`); }
+    }catch(e){ botLog("err","ما قدرت اكتب الدرس: "+e.message); }
+    t.lessonDone=true; }
+}
+async function botCycle(manual){
+  if(botBusy) return; botBusy=true; BOT.lastRun=Date.now(); renderBot();
+  const cfg=BOT.cfg, tf=cfg.tf, step=TF_MS[tf];
+  try{
+    if(online===false){ botLog("err","ما في اتصال بـ Binance، الوكيل ما بيشتغل على بيانات تجريبية."); return; }
+    // 1) update open positions (catches up on missed candles too)
+    const open=[...BOT.ai.pos.map(p=>["ai",p]),...BOT.rules.pos.map(p=>["rules",p])], syms=[...new Set(open.map(([,p])=>p.sym))], kc={};
+    await pool(syms,4,async s=>{ const minLast=Math.min(...open.filter(([,p])=>p.sym===s).map(([,p])=>p.lastT)); const need=clamp(Math.ceil((Date.now()-minLast)/step)+3,50,1500); kc[s]=await fetchKlines(s,tf,need).catch(()=>null); });
+    for(const [k,p] of open){ const c=kc[p.sym]; if(!c) continue; S.prices[p.sym]=c[c.length-1].c; const why=processPos(p,c,step); if(why) botClose(k,p,why); }
+    // 2) lessons from newly closed trades
+    await botLessons();
+    // 3) scan
+    const coins=cfg.src==="watch"?WATCH.slice():await top25();
+    const data=(await pool(coins,5,async s=>{ try{ const c=await fetchKlines(s,tf,300); return {sym:s,c,A:analyze(c,PP(s,tf),true)}; }catch(e){ return null; } })).filter(Boolean);
+    data.forEach(d=>S.prices[d.sym]=d.c[d.c.length-1].c);
+    // 4) rules-only bot (benchmark)
+    if(cfg.rules) for(const d of data){ if(BOT.rules.pos.length>=cfg.maxOpen) break; if(!d.A.bt.pending||BOT.rules.pos.some(p=>p.sym===d.sym)) continue;
+      const pp=PP(d.sym,tf), dir=d.A.bt.pending, entry=d.c[d.c.length-1].c, dist=pp.slAtr*d.A.a[d.A.last];
+      botOpen("rules",d.sym,dir,entry,entry-dir*dist,[pp.tp1R,pp.tp2R,pp.tp3R].map(r=>entry+dir*dist*r),Math.min(cfg.lev,10),{src:"rule"},d.c[d.c.length-2].t); }
+    // 5) AI decisions
+    const cands=data.filter(d=>!BOT.ai.pos.some(p=>p.sym===d.sym)&&(d.A.bt.pending||(d.A.bias.dir&&d.A.bias.str>=cfg.minStr)))
+      .sort((a,b)=>((b.A.bt.pending?1:0)-(a.A.bt.pending?1:0))||b.A.bias.str-a.A.bias.str);
+    if(!cands.length) botLog("info",`دورة ${tf}: فحصت ${data.length} عملة، وما في فرصة فوق ${cfg.minStr}%.`);
+    let asked=0;
+    for(const d of cands){ if(BOT.ai.pos.length>=cfg.maxOpen){ botLog("info","الوكيل عندو الحد الأقصى من الصفقات المفتوحة."); break; }
+      if(callsLeft()<=0){ botLog("warn",`خلصت طلبات الـ AI لليوم (${cfg.maxCalls}). بيرجع بكرا.`); break; }
+      if(asked>=2) break; asked++; await botDecide(d); }
+  }catch(e){ botLog("err",e.message); }
+  finally{ botBusy=false; saveBot(); renderBot(); }
+}
+function botTick(){ if(!BOT.on||botBusy) return; const step=TF_MS[BOT.cfg.tf], bar=Math.floor((Date.now()-8000)/step); if(bar!==BOT.lastBar){ BOT.lastBar=bar; botCycle(false); } }
+setInterval(botTick,15000);
+setInterval(async()=>{ if(!(BOT.ai.pos.length||BOT.rules.pos.length)||online===false) return; try{ const all=await getJSON("/fapi/v1/ticker/price"); all.forEach(x=>S.prices[x.symbol]=+x.price); renderBot(); }catch(e){} },30000);
+async function keepAwake(){ try{ if(BOT.on&&navigator.wakeLock&&document.visibilityState==="visible"&&!wakeLock){ wakeLock=await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release",()=>wakeLock=null); } }catch(e){} }
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ keepAwake(); botTick(); } });
+
+function renderBot(){
+  if(!$("tab-bot")) return; const cfg=BOT.cfg, step=TF_MS[cfg.tf];
+  const next=(Math.floor(Date.now()/step)+1)*step+8000;
+  $("bStatus").innerHTML = BOT.on ? `<span class="pill long">● شغّال</span> <span class="sub">فريم ${cfg.tf} · الدورة الجاية <span class="num">${tstr(next)}</span></span>` : `<span class="pill wait">⏸ واقف</span>`;
+  if(botBusy) $("bStatus").innerHTML+=` <span class="sub"><span class="spin"></span> عم يشتغل…</span>`;
+  $("bToggle").textContent=BOT.on?"⏸ وقّف الوكيل":"▶ شغّل الوكيل"; $("bToggle").className="btn "+(BOT.on?"":"primary");
+  $("bCalls").innerHTML=`طلبات AI اليوم: <b class="num">${cfg.maxCalls-callsLeft()}/${cfg.maxCalls}</b> · آخر دورة: <span class="num">${BOT.lastRun?tstr(BOT.lastRun):"—"}</span> · ${wakeLock?"الشاشة ما رح تنطفي ✓":"<span style='color:var(--warn)'>خلّي الصفحة مفتوحة والشاشة شغالة</span>"}`;
+  const card=k=>{ const s=acctStats(k); return `<div class="panel"><div class="row" style="justify-content:space-between"><b>${ACCT[k]}${k==="rules"?' <span class="sub">(بدون AI، للمقارنة)</span>':''}</b><span class="num ${s.net>=0?'pos':'neg'}" style="font-size:18px;font-weight:700">${pct(s.net)}</span></div>
+    <div class="stats" style="margin-top:10px">${[["الرصيد","$"+s.eq.toFixed(2)],["صفقات",s.n],["نسبة الربح",s.win==null?"—":s.win.toFixed(0)+"%"],["عامل الربح",s.pf==null?"—":s.pf===Infinity?"∞":s.pf.toFixed(2)],["متوسط R",s.avgR==null?"—":s.avgR.toFixed(2)],["مفتوحة",s.open]].map(([l,v])=>`<div class="stat"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("")}</div></div>`; };
+  $("bCards").innerHTML=card("ai")+(cfg.rules?card("rules"):"");
+  const openRows=[...BOT.ai.pos.map(p=>["ai",p]),...BOT.rules.pos.map(p=>["rules",p])];
+  $("bOpen").innerHTML=openRows.length?openRows.map(([k,p])=>{ const px=S.prices[p.sym], u=px?p.pnl+p.rem*(px-p.entry)*p.dir:null, R=u!=null?u/(p.qty*p.risk):null;
+    return `<tr><td>${ACCT[k]}</td><td class="num"><a href="#" data-go="${p.sym}" style="color:var(--text)">${base(p.sym)}</a></td><td><span class="pill ${p.dir>0?'long':'short'}">${p.dir>0?'لونغ':'شورت'}</span></td>
+      <td class="num">${fp(p.entry)}</td><td class="num neg">${fp(p.sl,p.entry)}${p.be?' <span class="sub">تعادل</span>':''}</td><td class="num pos">${p.hit<3?fp(p.tps[p.hit],p.entry):"—"} <span class="sub">(${p.hit}/3)</span></td>
+      <td class="num">${px?fp(px,p.entry):"—"}</td><td class="num ${u>=0?'pos':'neg'}">${u==null?"—":(u>=0?"+":"")+u.toFixed(2)}</td><td class="num ${R>=0?'pos':'neg'}">${R==null?"—":R.toFixed(2)}</td><td class="num">${p.lev}x</td><td class="num">${tstr(p.tOpen)}</td>
+      <td style="white-space:normal;min-width:180px;font-size:12px">${esc(p.meta?.reason||"إشارة الأداة")}</td></tr>`; }).join(""):`<tr><td colspan="12" class="sub">ما في صفقات مفتوحة.</td></tr>`;
+  const closed=[...BOT.ai.closed.map(t=>["ai",t]),...BOT.rules.closed.map(t=>["rules",t])].sort((a,b)=>b[1].tClose-a[1].tClose).slice(0,60);
+  $("bClosed").innerHTML=closed.length?closed.map(([k,t])=>`<tr><td>${ACCT[k]}</td><td class="num">${base(t.sym)}</td><td><span class="pill ${t.dir>0?'long':'short'}">${t.dir>0?'لونغ':'شورت'}</span></td><td class="num">${tstr(t.tOpen)}</td><td class="num">${tstr(t.tClose)}</td>
+    <td class="num">${fp(t.entry)}</td><td class="num">${fp(t.exit,t.entry)}</td><td>${t.reason}</td><td class="num ${t.R>=0?'pos':'neg'}">${t.R.toFixed(2)}</td><td class="num ${t.pnl>=0?'pos':'neg'}">${t.pnl>=0?"+":""}${t.pnl.toFixed(2)}</td></tr>`).join(""):`<tr><td colspan="10" class="sub">لسا ما انسكّرت ولا صفقة.</td></tr>`;
+  $("bLessons").innerHTML=BOT.lessons.length?BOT.lessons.map((l,i)=>`<li><span class="num ${l.R>=0?'pos':'neg'}">${l.R>=0?"+":""}${l.R.toFixed(1)}R</span> <b class="num">${base(l.sym)}</b> ${esc(l.text)} <button class="ibtn" data-ldel="${i}" aria-label="احذف الدرس">×</button></li>`).join(""):'<li class="sub">لسا ما في دروس. بعد كل صفقة بتنسكّر، الوكيل بيكتب درس وبيستعملو بقراراتو الجاية.</li>';
+  const ic={open:"🟢",win:"✅",loss:"🔻",skip:"⏭",info:"·",warn:"⚠",err:"⛔",lesson:"📝"};
+  $("bLog").innerHTML=BOT.log.slice(0,80).map(l=>`<div><span class="num sub">${tstr(l.t)}</span> ${ic[l.kind]||"·"} ${esc(l.text)}</div>`).join("")||'<div class="sub">لسا ما في نشاط.</div>';
+}
+function fillBotForm(){ const c=BOT.cfg; $("bTf").value=c.tf; $("bSrc").value=c.src; $("bMin").value=c.minStr; $("bMaxOpen").value=c.maxOpen; $("bRisk").value=c.risk; $("bLev").value=c.lev; $("bMaxCalls").value=c.maxCalls; $("bStart").value=c.start; $("bRules").checked=c.rules; }
+$("bForm").addEventListener("submit",e=>{ e.preventDefault(); const n=(id,d)=>{ const v=+$(id).value; return isFinite(v)&&$(id).value!==""?v:d; }, c=BOT.cfg, oldTf=c.tf;
+  c.tf=$("bTf").value; c.src=$("bSrc").value; c.minStr=clamp(n("bMin",60),30,95); c.maxOpen=clamp(Math.round(n("bMaxOpen",3)),1,10); c.risk=clamp(n("bRisk",1),0.1,5);
+  c.lev=clamp(Math.round(n("bLev",10)),1,50); c.maxCalls=clamp(Math.round(n("bMaxCalls",40)),1,500); c.rules=$("bRules").checked;
+  const st=n("bStart",1000); if(st!==c.start&&!BOT.ai.closed.length&&!BOT.ai.pos.length&&!BOT.rules.closed.length&&!BOT.rules.pos.length){ c.start=st; BOT.ai.bal=st; BOT.rules.bal=st; }
+  if(oldTf!==c.tf) BOT.lastBar=0; saveBot(); renderBot(); toast("انحفظت إعدادات الوكيل ✓"); });
+$("bToggle").addEventListener("click",()=>{ if(!BOT.on&&!store.get("frp_key","")){ toast("حط مفتاح Anthropic API بالإعدادات أول."); return; }
+  BOT.on=!BOT.on; if(BOT.on){ BOT.lastBar=0; botLog("info",`▶ الوكيل اشتغل على فريم ${BOT.cfg.tf}.`); keepAwake(); botTick(); } else { botLog("info","⏸ الوكيل وقف."); try{ wakeLock&&wakeLock.release(); }catch(e){} }
+  saveBot(); renderBot(); });
+$("bRun").addEventListener("click",()=>{ if(!store.get("frp_key","")){ toast("حط مفتاح Anthropic API بالإعدادات أول."); return; } botCycle(true); });
+$("bReset").addEventListener("click",e=>{ const b=e.currentTarget; if(!b.dataset.sure){ b.dataset.sure="1"; b.textContent="أكّد: رح يمسح كل الصفقات"; setTimeout(()=>{ delete b.dataset.sure; b.textContent="↺ صفّر الحساب"; },3500); return; }
+  const keepL=$("bKeepLessons").checked, les=BOT.lessons; BOT=newBot(BOT.cfg); if(keepL) BOT.lessons=les; botLog("info","↺ الحساب الورقي تصفّر."); saveBot(); fillBotForm(); renderBot(); delete b.dataset.sure; b.textContent="↺ صفّر الحساب"; });
+$("bLessons").addEventListener("click",e=>{ const b=e.target.closest("[data-ldel]"); if(!b) return; BOT.lessons.splice(+b.dataset.ldel,1); saveBot(); renderBot(); });
+$("bOpen").addEventListener("click",e=>{ const a=e.target.closest("[data-go]"); if(a){ e.preventDefault(); selectSym(a.dataset.go); } });
+
 /* ================= settings ================= */
 const FIELDS=Object.keys(DEFAULTS);
 function fillForm(){ FIELDS.forEach(k=>{ const el=$(k); if(!el) return; if(el.type==="checkbox") el.checked=!!P[k]; else el.value=P[k]; }); $("apiKey").value=store.get("frp_key",""); $("model").value=store.get("frp_model","claude-sonnet-5"); }
@@ -1057,7 +1269,7 @@ $("scards").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const c=e.targe
 $("aiScanRes").addEventListener("click",e=>{ const a=e.target.closest("[data-s]"); if(a){ e.preventDefault(); const s=a.dataset.s.toUpperCase(); selectSym(s.endsWith("USDT")?s:s+"USDT"); } });
 $("typeTog").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; S.chartType=b.dataset.v; [...$("typeTog").children].forEach(x=>x.classList.toggle("on",x===b)); clearAi(); drawAll(false); });
 $("indTog").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; const k=b.dataset.v; S.ind[k]=!S.ind[k]; b.classList.toggle("on",S.ind[k]); store.set("frp_ind",S.ind); drawAll(false); });
-document.querySelector(".tabs").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b)); ["journal","opt","trades","settings"].forEach(t=>$("tab-"+t).hidden=t!==b.dataset.tab); if(b.dataset.tab==="opt") oInfo(); });
+document.querySelector(".tabs").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b)); ["bot","journal","opt","trades","settings"].forEach(t=>$("tab-"+t).hidden=t!==b.dataset.tab); if(b.dataset.tab==="bot") renderBot(); if(b.dataset.tab==="opt") oInfo(); });
 $("btnScan").addEventListener("click",()=>scanAll(false));
 $("btnAi").addEventListener("click",runAi); $("btnAiScan").addEventListener("click",runAiScan); $("btnAiClear").addEventListener("click",clearAi);
 $("btnNotif").addEventListener("click",async()=>{ if(!S.notif){ try{ if("Notification" in window&&Notification.permission==="default") await Notification.requestPermission(); }catch(e){} S.notif=true; beep(); } else S.notif=false; $("btnNotif").textContent="🔔 التنبيهات: "+(S.notif?"شغالة":"مطفية"); });
@@ -1065,7 +1277,8 @@ setInterval(()=>{ if(S.mode==="live") setFeeds(); if(S.ticker&&S.mode==="live") 
 
 /* ================= boot ================= */
 fillForm(); renderTf(); [...$("indTog").children].forEach(b=>b.classList.toggle("on",!!S.ind[b.dataset.v])); renderChips(); renderMTF();
-renderJournal(); renderProfBadge();
+renderJournal(); renderProfBadge(); fillBotForm(); renderBot(); setInterval(()=>{ if(!$("tab-bot").hidden) renderBot(); },20000);
+if(BOT.on){ keepAwake(); setTimeout(botTick,4000); }
 if(initCharts()){ loadSymbols(); loadSymbol().then(jPrices); }
 </script>
 </body>
