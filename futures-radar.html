@@ -182,6 +182,17 @@ td.num{text-align:left}
 .fs{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0 0 14px;background:var(--panel)}
 .fs legend{padding:0 6px;color:var(--accent);font-size:12.5px;font-weight:600}
 .note{font-size:12px;color:var(--muted);margin:8px 0 0;max-width:80ch}
+.sel{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:13px}
+.field input[type=datetime-local]{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:13px;direction:ltr}
+.jstats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.jstats .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.flowg{display:grid;grid-template-columns:1fr auto;gap:5px 10px;font-size:12.5px}
+.flowg dt{color:var(--muted)}.flowg dd{margin:0;text-align:left;font-family:var(--mono);direction:ltr}
+.flowread{margin-top:10px;display:flex;flex-direction:column;gap:5px;font-size:12.5px}
+.flowread div{border-inline-start:3px solid var(--line2);padding-inline-start:8px}
+.flowread .g{border-color:var(--long)}.flowread .r{border-color:var(--short)}.flowread .y{border-color:var(--warn)}
+.ibtn{background:none;border:1px solid var(--line);border-radius:5px;padding:1px 7px;cursor:pointer;font-size:12px;color:var(--muted)}
+.ibtn:hover{color:var(--text);border-color:var(--line2)}
 .disclaimer{font-size:11.5px;color:var(--faint);text-align:center}
 .toast{position:fixed;bottom:20px;left:20px;background:var(--panel3);border:1px solid var(--line2);border-radius:8px;padding:10px 14px;max-width:360px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.45)}
 .spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
@@ -223,6 +234,8 @@ td.num{text-align:left}
   </div>
 </section>
 
+<div class="sub" id="profBadge" hidden style="background:var(--ai-bg);border:1px solid rgba(148,160,247,.35);border-radius:8px;padding:6px 10px;color:#c8cefc"></div>
+
 <section class="panel">
   <div class="phead"><h2>البحث التلقائي</h2><span class="sub" id="scanSub">يفحص أعلى 25 عملة بالحجم</span><div class="spacer"></div>
     <button class="btn primary" id="btnScan">▶ تشغيل</button><button class="btn ai" id="btnAiScan">الوكيل يختار أحسن فرص</button></div>
@@ -258,6 +271,10 @@ td.num{text-align:left}
 
   <aside class="side">
     <div class="panel plan" id="plan"></div>
+    <div class="panel" id="flowCard">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0;font-size:13px">بيانات الفيوتشر</h3><span class="sub" id="flowSub"></span></div>
+      <div id="flow"><p class="sub">عم يحمّل…</p></div>
+    </div>
 
     <div class="panel aicard">
       <h3>وكيل الذكاء الاصطناعي</h3>
@@ -274,8 +291,50 @@ td.num{text-align:left}
 </div>
 
 <div>
-  <nav class="tabs"><button class="on" data-tab="trades">صفقات المحاكاة</button><button data-tab="settings">الإعدادات والاستراتيجية</button></nav>
-  <div class="tabpane" id="tab-trades">
+  <nav class="tabs" id="tabsNav"><button class="on" data-tab="journal">سجل صفقاتي</button><button data-tab="opt">محسّن الاستراتيجية</button><button data-tab="trades">صفقات المحاكاة</button><button data-tab="settings">الإعدادات والاستراتيجية</button></nav>
+  <div class="tabpane" id="tab-journal">
+    <div class="jstats" id="jStats"></div>
+    <div class="row" style="gap:8px;margin:12px 0">
+      <button class="btn primary" id="jNew">+ صفقة جديدة</button>
+      <button class="btn ai" id="jAi">قيّمني يا وكيل</button>
+      <div class="spacer"></div>
+      <button class="btn" id="jExport">⤓ نسخة احتياطية</button>
+      <label class="btn" for="jImport" style="cursor:pointer">⤒ استرجاع</label><input type="file" id="jImport" accept=".json,application/json" hidden>
+    </div>
+    <div class="res" id="jAiRes"></div>
+    <form class="fs" id="jForm" hidden>
+      <legend id="jFormTitle">صفقة جديدة</legend>
+      <div class="form">
+        <div class="field"><label for="jSym">العملة</label><input type="text" id="jSym" autocomplete="off" style="text-transform:uppercase"></div>
+        <div class="field"><label for="jSide">الاتجاه</label><select id="jSide" class="sel"><option value="1">لونغ</option><option value="-1">شورت</option></select></div>
+        <div class="field"><label for="jEntry">سعر الدخول</label><input type="number" id="jEntry" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="jSl">الستوب</label><input type="number" id="jSl" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="jTp">الهدف</label><input type="number" id="jTp" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="jMargin">الهامش $ (المبلغ من محفظتك)</label><input type="number" id="jMargin" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="jLev">الرافعة</label><input type="number" id="jLev" step="1" min="1" max="125" inputmode="numeric"></div>
+        <div class="field"><label for="jOpen">وقت الفتح</label><input type="datetime-local" id="jOpen"></div>
+        <div class="field"><label for="jExit">سعر الخروج (فاضي = مفتوحة)</label><input type="number" id="jExit" step="any" inputmode="decimal"></div>
+        <div class="field"><label for="jClose">وقت الإغلاق</label><input type="datetime-local" id="jClose"></div>
+        <div class="field"><label for="jSrc">مصدر الفكرة</label><select id="jSrc" class="sel"><option value="signal">إشارة الأداة</option><option value="ai">الوكيل</option><option value="bias">خطة الاتجاه</option><option value="manual">قراري أنا</option></select></div>
+        <div class="field" style="grid-column:1/-1"><label for="jNote">ملاحظات (ليش فتت، شو حسيت، شو غلطت)</label><input type="text" id="jNote"></div>
+      </div>
+      <div class="row" style="gap:8px;margin-top:12px"><button class="btn primary" type="submit">احفظ</button><button class="btn" type="button" id="jCancel">إلغاء</button><button class="btn" type="button" id="jNowPx">حط السعر الحالي بالخروج</button></div>
+    </form>
+    <div class="tablewrap"><table>
+      <thead><tr><th>الحالة</th><th>العملة</th><th>الاتجاه</th><th>الفتح</th><th>الدخول</th><th>الخروج / الحالي</th><th>الهامش × رافعة</th><th>الربح $</th><th>% من الهامش</th><th>R</th><th>المصدر</th><th></th></tr></thead>
+      <tbody id="jBody"></tbody></table></div>
+    <p class="note">السجل بينحفظ بـ Safari على هالجهاز بس. اعمل "نسخة احتياطية" كل فترة، لأنو إذا مسحت بيانات Safari بيروح.</p>
+  </div>
+  <div class="tabpane" id="tab-opt" hidden>
+    <div class="panel">
+      <p style="margin:0 0 6px">المحسّن بيجرب <b class="num" id="oCount">—</b> تركيبة إعدادات على آخر 1500 شمعة من <b class="num" id="oTarget">—</b>.</p>
+      <p class="note" style="margin:0 0 12px">بيختار الأحسن على أول 70% من البيانات (فترة التدريب)، وبعدين بيختبرها على آخر 30% اللي ما شافها (فترة الاختبار). إذا نجحت بالاختبار كمان، بتكون أقرب لإنها حقيقية ومو صدفة. الإعدادات بتنحفظ لهالعملة وهالفريم بس.</p>
+      <div class="row" style="gap:10px"><button class="btn primary" id="oRun">▶ ابدأ التحسين</button><span class="sub" id="oProg"></span></div>
+      <div class="meter" style="margin-top:10px"><span id="oBar" style="width:0;background:var(--long)"></span></div>
+    </div>
+    <div id="oRes" style="margin-top:12px"></div>
+  </div>
+  <div class="tabpane" id="tab-trades" hidden>
     <div class="tablewrap"><table>
       <thead><tr><th>#</th><th>الاتجاه</th><th>الدخول</th><th>سعر الدخول</th><th>الخروج</th><th>آخر سعر خروج</th><th>النتيجة</th><th>R</th><th>الربح $</th><th>الرصيد</th></tr></thead>
       <tbody id="tradeBody"></tbody></table></div>
@@ -328,6 +387,10 @@ const store={ get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:J
 const DEFAULTS={ emaFast:9, emaSlow:21, emaTrend:200, crossLook:3, rsiLongMin:50, rsiLongMax:70, rsiShortMin:30, rsiShortMax:50, minAdx:18,
   useTrend:true, useMacd:true, useSar:false, slAtr:1.5, tp1R:1, tp2R:2, tp3R:3, breakeven:true, capital:1000, lev:10, riskPct:1, fee:0.04 };
 let P=Object.assign({},DEFAULTS,store.get("frp_params",{}));
+const PKEYS=["emaFast","emaSlow","emaTrend","slAtr","tp1R","tp2R","tp3R","useMacd","minAdx"];
+let PROF=store.get("frp_prof",{});
+const PP=(sym,tf)=>Object.assign({},P,PROF[sym+"|"+tf]||{});
+let CP=P;
 let WATCH=store.get("frp_watch",["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT","XRPUSDT","DOGEUSDT"]);
 const TFS=["1m","5m","15m","30m","1h","4h","1d"], MTF=["1d","4h","1h","15m","5m","1m"];
 const TF_MS={ "1m":6e4,"5m":3e5,"15m":9e5,"30m":18e5,"1h":36e5,"4h":144e5,"1d":864e5 };
@@ -335,6 +398,10 @@ const S={ symbol:store.get("frp_sym","BTCUSDT"), tf:store.get("frp_tf","15m"), c
   lines:[], aiLines:[], srLines:[], notif:false, lastSigKey:"", mtf:{}, symbols:[], scan:null, scanTf:store.get("frp_stf","5m"), minStr:store.get("frp_min",40),
   scanSrc:"top", scanning:false, lastScanBar:0, prevScanSigs:new Set(), chartType:"candle", ind:store.get("frp_ind",{ema:true,bb:false,sar:true,sr:true,vol:true,trades:true}) };
 const API="https://fapi.binance.com";
+function refreshCP(){ CP=PP(S.symbol,S.tf); renderProfBadge(); }
+function renderProfBadge(){ const k=S.symbol+"|"+S.tf, has=!!PROF[k], el=document.getElementById("profBadge"); if(!el) return;
+  el.hidden=!has; if(has){ const p=PROF[k]; el.innerHTML=`⚙︎ إعدادات مخصصة لـ ${base(S.symbol)} ${S.tf}: EMA ${p.emaFast}/${p.emaSlow}/${p.emaTrend} · ستوب ${p.slAtr}×ATR · أهداف ${p.tp1R}/${p.tp2R}/${p.tp3R}R <button class="btn" id="btnProfDel" style="padding:1px 8px;font-size:11.5px">رجّع العامة</button>`;
+    document.getElementById("btnProfDel").onclick=()=>{ delete PROF[k]; store.set("frp_prof",PROF); refreshCP(); S.A=analyze(S.candles,CP); renderAll(false); loadMTF(); toast("رجعت الإعدادات العامة لهالعملة"); }; } }
 const TZ=-new Date().getTimezoneOffset()*60;
 
 /* ================= helpers ================= */
@@ -467,11 +534,11 @@ function plan(){
   const A=S.A,c=S.candles; if(!A) return null; const px=c[c.length-1].c, at=A.a[A.last]; if(!at) return null;
   let p;
   if(A.bt.open){ const o=A.bt.open; p={kind:"open",dir:o.dir,entry:o.entry,sl:o.sl,tps:o.tps,hit:o.hit,t:o.t,risk:o.risk,be:o.be}; }
-  else if(A.bt.pending){ const dir=A.bt.pending,entry=c[c.length-1].o,dist=P.slAtr*at; p={kind:"new",dir,entry,sl:entry-dir*dist,tps:[P.tp1R,P.tp2R,P.tp3R].map(r=>entry+dir*dist*r),hit:0,t:c[c.length-1].t,risk:dist}; }
-  else if(A.bias.dir && A.bias.str>=45){ const dir=A.bias.dir,entry=px,dist=P.slAtr*at; p={kind:"bias",dir,entry,sl:entry-dir*dist,tps:[P.tp1R,P.tp2R,P.tp3R].map(r=>entry+dir*dist*r),hit:0,t:Date.now(),risk:dist}; }
+  else if(A.bt.pending){ const dir=A.bt.pending,entry=c[c.length-1].o,dist=CP.slAtr*at; p={kind:"new",dir,entry,sl:entry-dir*dist,tps:[CP.tp1R,CP.tp2R,CP.tp3R].map(r=>entry+dir*dist*r),hit:0,t:c[c.length-1].t,risk:dist}; }
+  else if(A.bias.dir && A.bias.str>=45){ const dir=A.bias.dir,entry=px,dist=CP.slAtr*at; p={kind:"bias",dir,entry,sl:entry-dir*dist,tps:[CP.tp1R,CP.tp2R,CP.tp3R].map(r=>entry+dir*dist*r),hit:0,t:Date.now(),risk:dist}; }
   else return null;
-  const riskUsd=P.capital*P.riskPct/100, qty=riskUsd/p.risk, notional=qty*p.entry;
-  p.notional=Math.min(notional,P.capital*P.lev); p.levNeed=Math.max(1,Math.ceil(notional/P.capital)); p.capped=notional>P.capital*P.lev;
+  const riskUsd=CP.capital*CP.riskPct/100, qty=riskUsd/p.risk, notional=qty*p.entry;
+  p.notional=Math.min(notional,CP.capital*CP.lev); p.levNeed=Math.max(1,Math.ceil(notional/CP.capital)); p.capped=notional>CP.capital*CP.lev;
   p.rr=(Math.abs(p.tps[2]-p.entry)/p.risk);
   return p;
 }
@@ -497,7 +564,7 @@ function initCharts(){
   const mc=LC.createChart($("cMacd"),{...baseOpt(),timeScale:{visible:false}}); const mh=mc.addHistogramSeries({priceLineVisible:false,lastValueVisible:false});
   const ml=mc.addLineSeries({...lo,color:"#e3a94b"}), ms=mc.addLineSeries({...lo,color:"#94a0f7"});
   const ec=LC.createChart($("cEq"),{...baseOpt(),timeScale:{visible:false},rightPriceScale:{visible:false},handleScroll:false,handleScale:false,grid:{vertLines:{visible:false},horzLines:{visible:false}}});
-  const es=ec.addBaselineSeries({baseValue:{type:"price",price:P.capital},lineWidth:2,priceLineVisible:false,lastValueVisible:false,topLineColor:css("--long"),topFillColor1:"rgba(34,194,154,.25)",topFillColor2:"rgba(34,194,154,.02)",bottomLineColor:css("--short"),bottomFillColor1:"rgba(236,90,112,.02)",bottomFillColor2:"rgba(236,90,112,.25)"});
+  const es=ec.addBaselineSeries({baseValue:{type:"price",price:CP.capital},lineWidth:2,priceLineVisible:false,lastValueVisible:false,topLineColor:css("--long"),topFillColor1:"rgba(34,194,154,.25)",topFillColor2:"rgba(34,194,154,.02)",bottomLineColor:css("--short"),bottomFillColor1:"rgba(236,90,112,.02)",bottomFillColor2:"rgba(236,90,112,.25)"});
   let sy=false; const cs=[main,rc,mc]; cs.forEach(ch=>ch.timeScale().subscribeVisibleLogicalRangeChange(r=>{ if(sy||!r) return; sy=true; cs.forEach(o=>{ if(o!==ch) o.timeScale().setVisibleLogicalRange(r); }); sy=false; }));
   CH={main,candle,lineS,vol,eF,eS,eT,bbU,bbM,bbL,sar,rc,rs,mc,mh,ml,ms,ec,es}; return true;
 }
@@ -524,7 +591,7 @@ function drawAll(fit){
   if(A.bt.pending) m.push({time:T(c[A.last].t),position:A.bt.pending>0?"belowBar":"aboveBar",color:css("--accent"),shape:A.bt.pending>0?"arrowUp":"arrowDown",text:"إشارة"});
   m.sort((a,b)=>a.time-b.time); CH.candle.setMarkers(S.chartType==="line"?[]:m); CH.lineS.setMarkers(S.chartType==="line"?m:[]);
   drawLines();
-  CH.es.applyOptions({baseValue:{type:"price",price:P.capital}}); CH.es.setData(A.bt.eqPts.map(p=>({time:T(p.t),value:p.v})).filter((p,i,a)=>i===0||p.time>a[i-1].time)); CH.ec.timeScale().fitContent();
+  CH.es.applyOptions({baseValue:{type:"price",price:CP.capital}}); CH.es.setData(A.bt.eqPts.map(p=>({time:T(p.t),value:p.v})).filter((p,i,a)=>i===0||p.time>a[i-1].time)); CH.ec.timeScale().fitContent();
   if(fit){ const n=c.length; [CH.main,CH.rc,CH.mc].forEach(ch=>ch.timeScale().setVisibleLogicalRange({from:n-150,to:n+8})); }
 }
 function drawLines(){
@@ -551,7 +618,7 @@ function renderQuote(){
 function renderPlan(){
   const el=$("plan"), p=plan(), A=S.A, c=S.candles, px=c[c.length-1].c;
   const L=A.condL[A.last], Sx=A.condS[A.last], ck=(o,k)=>o?(o[k]?'<span class="ok">✓</span>':'<span class="no">✗</span>'):'<span class="no">·</span>';
-  const rows=[["cross",`تقاطع EMA ${P.emaFast}/${P.emaSlow}`],["stack","ترتيب المتوسطات"],["trend",`مع EMA ${P.emaTrend}`],["rsi","RSI بالمجال"],["macd","MACD بيأكد"],["adx",`ADX ≥ ${P.minAdx}`]].concat(P.useSar?[["sar","SAR بالاتجاه"]]:[]);
+  const rows=[["cross",`تقاطع EMA ${CP.emaFast}/${CP.emaSlow}`],["stack","ترتيب المتوسطات"],["trend",`مع EMA ${CP.emaTrend}`],["rsi","RSI بالمجال"],["macd","MACD بيأكد"],["adx",`ADX ≥ ${CP.minAdx}`]].concat(CP.useSar?[["sar","SAR بالاتجاه"]]:[]);
   const checks=`<details style="margin-top:8px"><summary class="sub" style="cursor:pointer">شروط الإشارة على آخر شمعة</summary><div class="checks">
     <div><b class="ok">لونغ</b><ul>${rows.map(([k,t])=>`<li>${ck(L,k)} ${t}</li>`).join("")}</ul></div>
     <div><b class="neg">شورت</b><ul>${rows.map(([k,t])=>`<li>${ck(Sx,k)} ${t}</li>`).join("")}</ul></div></div></details>`;
@@ -575,15 +642,17 @@ function renderPlan(){
     <dl class="kv">
       ${upnl!=null?`<dt>الربح الحالي</dt><dd class="num ${upnl>=0?'pos':'neg'}">${pct(upnl)} بدون رافعة</dd>`:""}
       <dt>حجم المركز</dt><dd class="num">$${p.notional.toFixed(0)}</dd>
-      <dt>الرافعة اللازمة</dt><dd class="num">${Math.min(p.levNeed,P.lev)}x${p.capped?' <span class="sub">(مقيّدة بالحد)</span>':''}</dd>
-      <dt>الخسارة إذا ضرب الستوب</dt><dd class="num neg">-$${(P.capital*P.riskPct/100).toFixed(2)}</dd>
-      <dt>الخروج</dt><dd>تلت على كل هدف، ${P.breakeven?"والستوب للدخول بعد الهدف 1":"والستوب ثابت"}</dd>
+      <dt>الرافعة اللازمة</dt><dd class="num">${Math.min(p.levNeed,CP.lev)}x${p.capped?' <span class="sub">(مقيّدة بالحد)</span>':''}</dd>
+      <dt>الخسارة إذا ضرب الستوب</dt><dd class="num neg">-$${(CP.capital*CP.riskPct/100).toFixed(2)}</dd>
+      <dt>الخروج</dt><dd>تلت على كل هدف، ${CP.breakeven?"والستوب للدخول بعد الهدف 1":"والستوب ثابت"}</dd>
     </dl>
-    <button class="btn primary" id="btnCopy" style="width:100%">⧉ انسخ الخطة</button>
+    ${(()=>{ const w=flowWarnings(p.dir); return w.length?`<div class="warnbox" style="text-align:right;margin:0 0 8px">${w.map(x=>"⚠ "+x).join("<br>")}</div>`:""; })()}
+    <div class="row" style="gap:6px"><button class="btn primary" id="btnCopy" style="flex:1">⧉ انسخ الخطة</button><button class="btn" id="btnLog" style="flex:1">＋ سجّل بالسجل</button></div>
     ${checks}
     <div class="warnbox">⚠ تحليل تعليمي مو توصية. اعمل بحثك بنفسك.</div>`;
-  $("btnCopy").onclick=()=>{ const txt=`${S.symbol} ${S.tf} — ${p.dir>0?"LONG":"SHORT"}\nالدخول: ${fp(p.entry,px)}\nالستوب: ${fp(p.sl,px)}\n${p.tps.map((v,i)=>`الهدف ${i+1}: ${fp(v,px)}`).join("\n")}\nR:R = 1:${p.rr.toFixed(2)} · رافعة ${Math.min(p.levNeed,P.lev)}x`;
+  $("btnCopy").onclick=()=>{ const txt=`${S.symbol} ${S.tf} — ${p.dir>0?"LONG":"SHORT"}\nالدخول: ${fp(p.entry,px)}\nالستوب: ${fp(p.sl,px)}\n${p.tps.map((v,i)=>`الهدف ${i+1}: ${fp(v,px)}`).join("\n")}\nR:R = 1:${p.rr.toFixed(2)} · رافعة ${Math.min(p.levNeed,CP.lev)}x`;
     const done=()=>toast("انسخت الخطة ✓"); if(navigator.clipboard) navigator.clipboard.writeText(txt).then(done).catch(()=>toast(txt,12000)); else toast(txt,12000); };
+  $("btnLog").onclick=()=>jOpenForm({sym:S.symbol,dir:p.dir,entry:+fp(p.kind==="open"?p.entry:px,px),sl:+fp(p.sl,px),tp:+fp(p.tps[1],px),lev:Math.min(p.levNeed,CP.lev),src:p.kind==="bias"?"bias":"signal",tOpen:Date.now()});
   if(p.kind==="new"){ const key=S.symbol+S.tf+c[A.last].t; if(S.lastSigKey&&S.lastSigKey!==key&&S.mode==="live") notify(`${S.symbol} ${p.dir>0?"لونغ":"شورت"} (${S.tf})`,`دخول ${fp(p.entry,px)} · ستوب ${fp(p.sl,px)}`); S.lastSigKey=key; }
   else if(!S.lastSigKey) S.lastSigKey="none";
 }
@@ -607,7 +676,7 @@ function setFeeds(){ $("dKline").className="dot "+(S.mode==="live"?(S.ws&&S.ws.r
 /* ================= MTF ================= */
 async function loadMTF(){
   const sym=S.symbol; $("mtfSub").innerHTML='<span class="spin"></span>';
-  await pool(MTF,3,async tf=>{ try{ const c= tf===S.tf&&S.candles.length ? S.candles : await fetchKlines(sym,tf,300); if(sym!==S.symbol) return; const A=analyze(c,P,true); S.mtf[tf]={bias:A.bias,sig:A.bt.pending,rsi:A.r[A.last]}; }catch(e){ S.mtf[tf]=null; } });
+  await pool(MTF,3,async tf=>{ try{ const c= tf===S.tf&&S.candles.length ? S.candles : await fetchKlines(sym,tf,300); if(sym!==S.symbol) return; const A=analyze(c,PP(sym,tf),true); S.mtf[tf]={bias:A.bias,sig:A.bt.pending,rsi:A.r[A.last]}; }catch(e){ S.mtf[tf]=null; } });
   if(sym!==S.symbol) return; renderMTF(); renderPlanSafe();
 }
 function mtfConfluence(){ const b=S.A?.bias; if(!b||!b.dir) return {agree:0,total:0}; let agree=0,total=0; MTF.forEach(tf=>{ const m=S.mtf[tf]; if(!m) return; total++; if(m.bias.dir===b.dir) agree++; }); return {agree,total}; }
@@ -627,14 +696,14 @@ function renderMTF(){
 
 /* ================= loading & live ================= */
 async function loadSymbol(){
-  const sym=S.symbol, tf=S.tf; closeWS(); S.mode=""; S.lastSigKey=""; S.ticker=null; S.mtf={}; clearAi(); renderMTF(); setFeeds();
+  const sym=S.symbol, tf=S.tf; closeWS(); S.mode=""; S.flow=null; $("flow").innerHTML='<p class="sub"><span class="spin"></span> عم يحمّل…</p>'; S.lastSigKey=""; S.ticker=null; S.mtf={}; clearAi(); renderMTF(); setFeeds();
   try{ const [k,f,t]=await Promise.all([fetchKlines(sym,tf,1000),fetchFunding(sym),fetchTicker(sym)]); if(sym!==S.symbol||tf!==S.tf) return;
     S.candles=k; S.funding=f; S.ticker=t; S.mode=online===false?"demo":"live"; if(S.mode==="live"){ showBanner(""); openWS(); } }
   catch(e){ if(sym!==S.symbol||tf!==S.tf) return;
     if(/مو موجود/.test(e.message)){ toast(`${sym} مو موجود على Binance Futures.`); if(sym!=="BTCUSDT"){ S.symbol="BTCUSDT"; return loadSymbol(); } }
     online=false; S.candles=demoKlines(sym,tf,1000); S.funding=null; S.mode="demo";
     showBanner("ما قدرت أوصل لـ Binance (ممكن النت، أو إنو Binance Futures محجوبة بمنطقتك، أو إنك فاتح الملف من جوّا تطبيق بيمنع الاتصال). عم تشوف بيانات تجريبية لتجرّب الأداة. افتح الملف بـ Chrome على الكمبيوتر."); }
-  setFeeds(); S.A=analyze(S.candles,P); renderAll(true); renderChips(); loadMTF();
+  setFeeds(); refreshCP(); S.A=analyze(S.candles,CP); renderAll(true); renderChips(); loadMTF(); loadFlow();
 }
 function closeWS(){ if(S.ws){ S.ws.onclose=null; try{S.ws.close();}catch(e){} S.ws=null; } }
 function openWS(){
@@ -646,7 +715,7 @@ function openWS(){
     if(d.e==="24hrTicker"){ S.ticker={c:+d.c,P:+d.P,h:+d.h,l:+d.l,q:+d.q}; return; }
     const k=d.k; if(!k) return; const bar={t:k.t,o:+k.o,h:+k.h,l:+k.l,c:+k.c,v:+k.v,q:+k.q}, c=S.candles, lb=c[c.length-1];
     if(bar.t===lb.t) c[c.length-1]=bar;
-    else if(bar.t>lb.t){ c.push(bar); if(c.length>1500) c.shift(); S.A=analyze(c,P); renderAll(false); fetchFunding(sym).then(f=>{ if(sym===S.symbol) S.funding=f; }); return; }
+    else if(bar.t>lb.t){ c.push(bar); if(c.length>1500) c.shift(); S.A=analyze(c,CP); renderAll(false); fetchFunding(sym).then(f=>{ if(sym===S.symbol) S.funding=f; }); return; }
     pend=bar; if(!raf) raf=requestAnimationFrame(()=>{ raf=0; if(!pend) return;
       if(S.chartType==="ha") CH.candle.setData(heikin(S.candles).map(x=>({time:T(x.t),open:x.o,high:x.h,low:x.l,close:x.c})));
       else CH.candle.update({time:T(pend.t),open:pend.o,high:pend.h,low:pend.l,close:pend.c});
@@ -688,7 +757,7 @@ async function scanAll(auto){
         all.filter(t=>ok.has(t.symbol)).sort((a,b)=>+b.quoteVolume-+a.quoteVolume).slice(0,25).forEach(t=>tick[t.symbol]={P:+t.priceChangePercent,q:+t.quoteVolume});
         syms=Object.keys(tick); }catch(e){ syms=S.symbols.slice(0,25); } }
     let done=0; $("scanInfo").innerHTML=`<span class="spin"></span> 0/${syms.length}`;
-    const rows=await pool(syms,5,async sym=>{ try{ const c=await fetchKlines(sym,tf,500); const A=analyze(c,P,true), px=c[c.length-1].c;
+    const rows=await pool(syms,5,async sym=>{ try{ const c=await fetchKlines(sym,tf,500); const A=analyze(c,PP(sym,tf),true), px=c[c.length-1].c;
         done++; $("scanInfo").innerHTML=`<span class="spin"></span> ${done}/${syms.length}`;
         const bars=Math.round(864e5/TF_MS[tf]), ref=c[Math.max(0,c.length-1-bars)].c;
         return {sym,px,ch:tick[sym]?.P??(px-ref)/ref*100,q:tick[sym]?.q,bias:A.bias,state:A.bt.pending?{dir:A.bt.pending,kind:"new"}:A.bt.open?{dir:A.bt.open.dir,kind:"open"}:{dir:0,kind:"none"},
@@ -721,13 +790,14 @@ function buildContext(){
   const c=S.candles,A=S.A,px=c[c.length-1].c,d=decimals(px),r=v=>v==null?null:+(+v).toFixed(d),r2=v=>v==null?null:+(+v).toFixed(2),L=A.last,lv=srLevels(c,A.a[L]),p=plan();
   return { symbol:S.symbol,timeframe:S.tf,now_local:new Date().toString(),price:r(px),data_source:S.mode,funding_rate_pct:S.funding?+S.funding.rate.toFixed(4):null,
     ticker_24h:S.ticker, last_40_closed_candles_OHLCV:c.slice(L-39,L+1).map(x=>[tstr(x.t),r(x.o),r(x.h),r(x.l),r(x.c),Math.round(x.v)]),
-    indicators:{ [`ema${P.emaFast}`]:r(A.eF[L]),[`ema${P.emaSlow}`]:r(A.eS[L]),[`ema${P.emaTrend}`]:r(A.eT[L]),rsi:r2(A.r[L]),rsi_prev5:A.r.slice(L-5,L).map(r2),
+    indicators:{ [`ema${CP.emaFast}`]:r(A.eF[L]),[`ema${CP.emaSlow}`]:r(A.eS[L]),[`ema${CP.emaTrend}`]:r(A.eT[L]),rsi:r2(A.r[L]),rsi_prev5:A.r.slice(L-5,L).map(r2),
       macd_hist:+(A.hist[L]||0).toPrecision(4),macd_hist_prev3:A.hist.slice(L-3,L).map(v=>+(v||0).toPrecision(4)),adx:r2(A.adx.adx[L]),plus_di:r2(A.adx.pdi[L]),minus_di:r2(A.adx.mdi[L]),
       psar:r(A.sar.sar[L]),psar_dir:A.sar.dir[L]>0?"below_price(bull)":"above_price(bear)",bb_upper:r(A.bb.up[L]),bb_lower:r(A.bb.lo[L]),atr:r(A.a[L]),atr_pct:r2(A.a[L]/px*100) },
     trend_strength_this_tf:A.bias, multi_timeframe:Object.fromEntries(MTF.map(t=>[t,S.mtf[t]?{dir:S.mtf[t].bias.dir,strength:S.mtf[t].bias.str,label:S.mtf[t].bias.label,rsi:r2(S.mtf[t].rsi),new_signal:S.mtf[t].sig}:null])),
     resistance_levels:lv.res.map(g=>r(g.v)),support_levels:lv.sup.map(g=>r(g.v)),
     rule_engine:{status:A.bt.pending?(A.bt.pending>0?"NEW_LONG_SIGNAL":"NEW_SHORT_SIGNAL"):A.bt.open?"IN_POSITION":"NO_SIGNAL",plan:p?{kind:p.kind,dir:p.dir,entry:r(p.entry),sl:r(p.sl),tps:p.tps.map(r)}:null,long_conditions:A.condL[L],short_conditions:A.condS[L]},
-    backtest_on_loaded_data:{...A.bt.stats,candles:c.length}, user_risk:{capital:P.capital,risk_pct:P.riskPct,max_leverage:P.lev} };
+    futures_flow:S.flow?{period:S.flow.per,open_interest_usd:S.flow.oi?Math.round(S.flow.oi):null,oi_change_24h_pct:S.flow.oiChg24!=null?+S.flow.oiChg24.toFixed(2):null,oi_change_recent_pct:S.flow.oiChgS!=null?+S.flow.oiChgS.toFixed(2):null,price_change_recent_pct:S.flow.pxChgS!=null?+S.flow.pxChgS.toFixed(2):null,taker_buy_sell_ratio:S.flow.taker,taker_avg6:S.flow.takerAvg!=null?+S.flow.takerAvg.toFixed(3):null,top_traders_long_short:S.flow.top,all_accounts_long_short:S.flow.glob,reading:S.flow.read.map(x=>x[1])}:null,
+    backtest_on_loaded_data:{...A.bt.stats,candles:c.length}, user_risk:{capital:CP.capital,risk_pct:CP.riskPct,max_leverage:CP.lev} };
 }
 const SYS=`إنت وكيل تحليل صفقات فيوتشر للعملات الرقمية (Binance USDT-M). بتاخد شموع ومؤشرات وتحليل متعدد الفريمات ودعوم ومقاومات ونتيجة محرك قواعد، وبتعطي قرار محافظ ومنضبط.
 قواعد:
@@ -735,6 +805,7 @@ const SYS=`إنت وكيل تحليل صفقات فيوتشر للعملات ا�
 - كل صفقة إلها ستوب منطقي (ورا دعم/مقاومة أو 1-2 ATR) وتلات أهداف، والهدف الأول نسبته 1:1 على الأقل والأخير 1:2 أو أكتر. استعمل الدعوم والمقاومات لتحديد الأهداف.
 - الرافعة معتدلة وما تتجاوز max_leverage، ومناسبة لمخاطرة المستخدم.
 - انتبه للفاندينغ العالي وللتعارض بين الفريم الحالي والفريمات الكبيرة.
+- استعمل futures_flow (Open Interest، ضغط الشرا والبيع، نسب اللونغ/شورت عند الكبار والجمهور) كتأكيد أو تحذير: OI طالع مع السعر = ترند قوي، وازدحام الجمهور باتجاه واحد = خطر انعكاس.
 - النصوص باللهجة السورية العامية، مختصرة. الأرقام إنكليزية.
 رجّع JSON بس بهالشكل:
 {"decision":"LONG|SHORT|WAIT","confidence":0-100,"entry":number|null,"entry_zone":[number,number]|null,"stop_loss":number|null,"take_profit":[number,number,number]|null,"leverage":number|null,"valid_for_candles":number,"summary":"","reasons":[""],"invalidation":"","exit_plan":""}`;
@@ -777,13 +848,201 @@ async function runAiScan(){
   catch(e){ box.innerHTML=`<p class="err">${esc(e.message)}</p>`; } b.disabled=false;
 }
 
+/* ================= futures flow data ================= */
+const FPER={"1m":"5m","5m":"5m","15m":"15m","30m":"30m","1h":"1h","4h":"4h","1d":"1d"};
+const PER_MS={"5m":3e5,"15m":9e5,"30m":18e5,"1h":36e5,"4h":144e5,"1d":864e5};
+async function loadFlow(){
+  const sym=S.symbol, per=FPER[S.tf]; if(online===false){ S.flow=null; renderFlow(); return; }
+  $("flowSub").innerHTML='<span class="spin"></span>';
+  const n24=Math.min(500,Math.round(864e5/PER_MS[per])+1), lim=Math.max(n24,14);
+  const q=(p,l)=>getJSON(`/futures/data/${p}?symbol=${sym}&period=${per}&limit=${l}`).catch(()=>null);
+  const [oi,top,glob,taker]=await Promise.all([q("openInterestHist",lim),q("topLongShortPositionRatio",14),q("globalLongShortAccountRatio",14),q("takerlongshortRatio",14)]);
+  if(sym!==S.symbol) return;
+  const F={per};
+  if(oi&&oi.length>7){ const v=oi.map(x=>+x.sumOpenInterestValue), last=v[v.length-1];
+    F.oi=last; F.oiChg24=(last-v[0])/v[0]*100; const k=Math.min(6,v.length-1); F.oiChgS=(last-v[v.length-1-k])/v[v.length-1-k]*100; F.shortN=k;
+    const c=S.candles, tEnd=+oi[oi.length-1].timestamp, tS=+oi[oi.length-1-k].timestamp;
+    const pAt=t=>{ for(let i=c.length-1;i>=0;i--) if(c[i].t<=t) return c[i].c; return c[0].c; };
+    F.pxChgS=(pAt(tEnd)-pAt(tS))/pAt(tS)*100; }
+  if(top&&top.length){ const l=top[top.length-1]; F.top=+l.longShortRatio; F.topLong=+l.longAccount*100; F.topPrev=+top[0].longShortRatio; }
+  if(glob&&glob.length){ const l=glob[glob.length-1]; F.glob=+l.longShortRatio; F.globLong=+l.longAccount*100; }
+  if(taker&&taker.length){ const r=taker.map(x=>+x.buySellRatio); F.taker=r[r.length-1]; const s=r.slice(-6); F.takerAvg=s.reduce((a,b)=>a+b,0)/s.length; }
+  F.funding=S.funding?S.funding.rate:null;
+  // reading
+  const R=[]; let score=0;
+  if(F.oiChgS!=null&&F.pxChgS!=null){ const pu=F.pxChgS>0.1, pd=F.pxChgS<-0.1, ou=F.oiChgS>0.5, od=F.oiChgS<-0.5;
+    if(pu&&ou){ R.push(["g","السعر طالع والـ OI طالع: فلوس جديدة عم تفوت لونغ. الصعود قوي."]); score+=1; }
+    else if(pu&&od){ R.push(["y","السعر طالع بس الـ OI نازل: هاد إغلاق شورتات (Short squeeze). صعود ممكن ما يكمّل."]); }
+    else if(pd&&ou){ R.push(["r","السعر نازل والـ OI طالع: شورتات جديدة عم تفوت. الهبوط قوي."]); score-=1; }
+    else if(pd&&od){ R.push(["y","السعر نازل والـ OI نازل: لونغات عم تنسكّر أو تتصفّى. الهبوط ممكن يهدى قريب."]); }
+    else R.push(["","السعر والـ OI تقريباً ثابتين. السوق عم يستنى."]); }
+  if(F.takerAvg!=null){ if(F.takerAvg>1.08){ R.push(["g",`ضغط الشرا أقوى من البيع (${F.takerAvg.toFixed(2)}). المشترين عم يدفشوا السعر.`]); score+=1; }
+    else if(F.takerAvg<0.92){ R.push(["r",`ضغط البيع أقوى (${F.takerAvg.toFixed(2)}). البياعين مسيطرين.`]); score-=1; } }
+  if(F.glob!=null){ if(F.glob>2.5) R.push(["y",`${F.globLong.toFixed(0)}% من الحسابات لونغ. الجمهور مزدحم عاللونغ، وهاد بيخلي في خطر تصفيات لتحت.`]);
+    else if(F.glob<0.7) R.push(["y",`أغلب الحسابات شورت (${(100-F.globLong).toFixed(0)}%). ممكن يصير Short squeeze لفوق.`]); }
+  if(F.top!=null&&F.glob!=null){ if(F.top>1.15&&F.glob<1) R.push(["g","كبار المتداولين لونغ والجمهور شورت. هاد غالباً بصالح الصعود."]);
+    else if(F.top<0.87&&F.glob>1.3) R.push(["r","كبار المتداولين شورت والجمهور لونغ. هاد غالباً بصالح الهبوط."]); }
+  if(F.funding!=null){ if(F.funding>0.05) R.push(["y",`الفاندينغ عالي (${F.funding.toFixed(3)}%). اللونغ عم يدفع كتير، والسوق محمّى.`]); else if(F.funding<-0.03) R.push(["y",`الفاندينغ سالب (${F.funding.toFixed(3)}%). الشورتات مزدحمة.`]); }
+  F.read=R; F.score=score; F.crowd = F.glob>2.5?1 : F.glob<0.7?-1 : 0;
+  S.flow=F; renderFlow(); renderPlanSafe();
+}
+function renderFlow(){
+  const F=S.flow; if(!F){ $("flow").innerHTML='<p class="sub">بيانات الفيوتشر بتشتغل بس مع الاتصال بـ Binance.</p>'; $("flowSub").textContent=""; return; }
+  const cl=v=>v==null?"":v>=0?"pos":"neg";
+  $("flowSub").textContent=`فترة ${F.per} · ${tstr(Date.now())}`;
+  $("flow").innerHTML=`<dl class="flowg">
+    ${F.oi!=null?`<dt>Open Interest</dt><dd>$${big(F.oi)} <span class="${cl(F.oiChg24)}">${pct(F.oiChg24)}</span> <span class="sub">24س</span></dd>
+    <dt>تغيّر OI آخر ${F.shortN} فترات</dt><dd class="${cl(F.oiChgS)}">${pct(F.oiChgS)} <span class="sub">سعر ${pct(F.pxChgS)}</span></dd>`:""}
+    ${F.takerAvg!=null?`<dt>ضغط شرا / بيع</dt><dd class="${F.takerAvg>=1?'pos':'neg'}">${F.taker.toFixed(2)} <span class="sub">متوسط ${F.takerAvg.toFixed(2)}</span></dd>`:""}
+    ${F.top!=null?`<dt>كبار المتداولين لونغ/شورت</dt><dd>${F.top.toFixed(2)} <span class="sub">${F.topLong.toFixed(0)}% لونغ</span></dd>`:""}
+    ${F.glob!=null?`<dt>كل الحسابات لونغ/شورت</dt><dd>${F.glob.toFixed(2)} <span class="sub">${F.globLong.toFixed(0)}% لونغ</span></dd>`:""}
+    ${F.funding!=null?`<dt>الفاندينغ</dt><dd class="${cl(-F.funding)}">${F.funding.toFixed(4)}%</dd>`:""}
+  </dl>
+  <div class="flowread">${F.read.map(([c,t])=>`<div class="${c}">${t}</div>`).join("")}</div>
+  <p class="sub" style="margin:8px 0 0">الخلاصة: ${F.score>0?'<b class="ok">التدفق بصالح الصعود</b>':F.score<0?'<b class="neg">التدفق بصالح الهبوط</b>':'<b>محايد</b>'}</p>`;
+}
+function flowWarnings(dir){ const F=S.flow, w=[]; if(!F) return w;
+  if(F.score && Math.sign(F.score)!==dir) w.push(`بيانات الفيوتشر عكس الصفقة (${F.score>0?"صعود":"هبوط"}).`);
+  if(F.crowd===dir) w.push(dir>0?"الجمهور مزدحم لونغ، انتبه من هبوط مفاجئ.":"الجمهور مزدحم شورت، انتبه من صعود مفاجئ.");
+  if(F.funding!=null&&dir>0&&F.funding>0.05) w.push("الفاندينغ عالي، رح تدفع عاللونغ.");
+  if(F.funding!=null&&dir<0&&F.funding<-0.03) w.push("الفاندينغ سالب، رح تدفع عالشورت.");
+  return w; }
+setInterval(()=>{ if(S.candles.length&&S.mode==="live") loadFlow(); },120000);
+
+/* ================= optimizer ================= */
+function buildGrid(){ const g=[];
+  [[9,21],[12,26],[5,13],[20,50]].forEach(([f,s])=>[50,100,200].forEach(t=>[1,1.5,2,2.5].forEach(sl=>[[1,2,3],[1,1.5,2.5],[1.5,2.5,4]].forEach(([a,b,c])=>[true,false].forEach(m=>[0,20,25].forEach(adx=>
+    g.push({emaFast:f,emaSlow:s,emaTrend:t,slAtr:sl,tp1R:a,tp2R:b,tp3R:c,useMacd:m,minAdx:adx}))))))); return g; }
+const GRID=buildGrid();
+function rStats(tr){ const n=tr.length; if(!n) return {n:0,win:null,sumR:0,pf:null,dd:0};
+  let sum=0,gp=0,gl=0,peak=0,dd=0,w=0; tr.forEach(t=>{ sum+=t.R; if(t.R>0){gp+=t.R;w++;} else gl-=t.R; peak=Math.max(peak,sum); dd=Math.max(dd,peak-sum); });
+  return {n,win:w/n*100,sumR:sum,pf:gl>0?gp/gl:(gp>0?99:null),dd}; }
+function oInfo(){ $("oCount").textContent=GRID.length; $("oTarget").textContent=`${S.symbol} · ${S.tf}`; }
+let oRunning=false;
+async function runOptimizer(){
+  if(oRunning) return; oRunning=true; $("oRun").disabled=true; const sym=S.symbol, tf=S.tf; oInfo();
+  $("oProg").innerHTML='<span class="spin"></span> عم جيب 1500 شمعة…'; $("oBar").style.width="0";
+  try{
+    const c=await fetchKlines(sym,tf,1500); const split=c[Math.floor(c.length*0.7)].t;
+    const evalP=p=>{ const A=analyze(c,p,true), tr=A.bt.trades; return {p, train:rStats(tr.filter(t=>t.tIn<split)), test:rStats(tr.filter(t=>t.tIn>=split))}; };
+    const cur=evalP(Object.assign({},P,PROF[sym+"|"+tf]||{}));
+    const res=[]; let i=0;
+    await new Promise(done=>{ const step=()=>{ const end=Math.min(i+24,GRID.length);
+      for(;i<end;i++) res.push(evalP(Object.assign({},P,GRID[i])));
+      $("oBar").style.width=(i/GRID.length*100)+"%"; $("oProg").textContent=`${i} / ${GRID.length}`;
+      if(i<GRID.length) setTimeout(step,0); else done(); }; step(); });
+    const minN=Math.max(6,Math.round(c.length/150));
+    const sc=r=>r.train.n<minN?-1e9:r.train.sumR-0.5*r.train.dd;
+    res.sort((a,b)=>sc(b)-sc(a)); const top=res.filter(r=>sc(r)>-1e9).slice(0,12);
+    const minT=Math.max(3,Math.round(minN*0.35)); const pass=r=>r.test.n>=minT&&r.test.sumR>0&&(r.test.pf??0)>1;
+    const best=top.find(pass);
+    const fmt=s=>s.n?`<span class="num">${s.n}</span> · <span class="num">${s.win.toFixed(0)}%</span> · PF <span class="num">${s.pf==null?"—":s.pf>=99?"∞":s.pf.toFixed(2)}</span> · <b class="num ${s.sumR>=0?'pos':'neg'}">${s.sumR>=0?"+":""}${s.sumR.toFixed(1)}R</b>`:'<span class="sub">ما في صفقات</span>';
+    const desc=p=>`EMA ${p.emaFast}/${p.emaSlow}/${p.emaTrend} · ستوب ${p.slAtr}×ATR · أهداف ${p.tp1R}/${p.tp2R}/${p.tp3R}R · MACD ${p.useMacd?"✓":"✗"} · ADX≥${p.minAdx}`;
+    S.oTop=top;
+    $("oRes").innerHTML=`<div class="panel" style="margin-bottom:12px">${best?`<p style="margin:0 0 6px"><b class="ok">✓ لقيت إعدادات نجحت بالتدريب وبالاختبار كمان.</b></p><p class="sub" style="margin:0 0 8px">${desc(best.p)}</p>
+        <p style="margin:0 0 10px;font-size:13px">اختبار (بيانات ما شافها): ${fmt(best.test)}<br>إعداداتك الحالية بنفس الفترة: ${fmt(cur.test)}</p>
+        <button class="btn primary" data-apply="${top.indexOf(best)}">طبّق هالإعدادات على ${base(sym)} ${tf}</button>`
+      :`<p style="margin:0"><b class="neg">ما لقيت إعدادات بتنجح بفترة الاختبار على ${base(sym)} ${tf}.</b></p><p class="sub" style="margin:6px 0 0">يعني هالاستراتيجية ما بتشتغل منيح على هالعملة بهالفريم هلق. جرّب فريم أكبر، أو اشتغل بعملة تانية.</p>`}</div>
+      <div class="tablewrap"><table><thead><tr><th>#</th><th>الإعدادات</th><th>تدريب (70%)<br><span class="sub">صفقات · ربح · PF · مجموع R</span></th><th>اختبار (30%)</th><th></th></tr></thead><tbody>
+      <tr><td>—</td><td class="sub">إعداداتك الحالية</td><td>${fmt(cur.train)}</td><td>${fmt(cur.test)}</td><td></td></tr>
+      ${top.map((r,k)=>`<tr><td class="num">${k+1}</td><td style="white-space:normal;min-width:240px;font-size:12px">${desc(r.p)}</td><td>${fmt(r.train)}</td><td>${fmt(r.test)} ${pass(r)?'<span class="ok">✓</span>':''}</td><td><button class="ibtn" data-apply="${k}">طبّق</button></td></tr>`).join("")}
+      </tbody></table></div>
+      <p class="note">R = وحدة المخاطرة. +10R يعني ربحت 10 أضعاف المبلغ اللي بتخاطر فيه بكل صفقة. النتايج على الماضي ما بتضمن المستقبل، وكرّر التحسين كل أسبوع أو اتنين لأنو السوق بيتغير.</p>`;
+    S.oSym=sym; S.oTf=tf; $("oProg").textContent=`خلص · ${tstr(Date.now())}`;
+  }catch(e){ $("oProg").innerHTML=`<span class="err">${esc(e.message)}</span>`; }
+  oRunning=false; $("oRun").disabled=false;
+}
+$("oRun").addEventListener("click",runOptimizer);
+$("oRes").addEventListener("click",e=>{ const b=e.target.closest("[data-apply]"); if(!b) return; const r=S.oTop[+b.dataset.apply]; if(!r) return;
+  const prof={}; PKEYS.forEach(k=>prof[k]=r.p[k]); PROF[S.oSym+"|"+S.oTf]=prof; store.set("frp_prof",PROF);
+  if(S.oSym===S.symbol&&S.oTf===S.tf){ refreshCP(); S.A=analyze(S.candles,CP); renderAll(false); loadMTF(); }
+  toast(`انحفظت الإعدادات لـ ${S.oSym} ${S.oTf} ✓`); window.scrollTo({top:0,behavior:"smooth"}); });
+
+/* ================= journal ================= */
+let J=store.get("frp_journal",[]); let jEdit=null; S.prices={};
+const saveJ=()=>store.set("frp_journal",J);
+const dtLocal=ms=>{ const d=new Date(ms-new Date().getTimezoneOffset()*6e4); return d.toISOString().slice(0,16); };
+const fromLocal=v=>v?new Date(v).getTime():null;
+const SRC={signal:"إشارة الأداة",ai:"الوكيل",bias:"خطة الاتجاه",manual:"قراري"};
+function jCalc(t,px){ const exit=t.exit??px; if(exit==null||!t.entry) return null;
+  const qty=t.margin*t.lev/t.entry, fee=CP.fee/100, pnl=qty*(exit-t.entry)*t.dir - qty*(t.entry+exit)*fee;
+  const risk=t.sl?Math.abs(t.entry-t.sl):null; return {pnl, pctM:pnl/t.margin*100, R:risk?(exit-t.entry)*t.dir/risk:null, exit}; }
+function renderJournal(){
+  const rows=J.slice().sort((a,b)=>(a.exit==null?0:1)-(b.exit==null?0:1)||b.tOpen-a.tOpen);
+  $("jBody").innerHTML=rows.length?rows.map(t=>{ const open=t.exit==null, px=open?S.prices[t.sym]:null, c=jCalc(t,px);
+    return `<tr><td>${open?'<span class="pill warn">مفتوحة</span>':c&&c.pnl>0?'<span class="pill long">ربح</span>':'<span class="pill short">خسارة</span>'}</td>
+      <td class="num"><a href="#" data-go="${t.sym}" style="color:var(--text)">${base(t.sym)}</a></td><td><span class="pill ${t.dir>0?'long':'short'}">${t.dir>0?'لونغ':'شورت'}</span></td>
+      <td class="num">${tstr(t.tOpen)}</td><td class="num">${fp(t.entry)}</td><td class="num">${c?fp(c.exit,t.entry):"—"}${open&&c?' <span class="sub">لايف</span>':''}</td>
+      <td class="num">$${f2(t.margin)} × ${t.lev}</td><td class="num ${c&&c.pnl>=0?'pos':'neg'}">${c?(c.pnl>=0?"+":"")+c.pnl.toFixed(2):"—"}</td>
+      <td class="num ${c&&c.pnl>=0?'pos':'neg'}">${c?pct(c.pctM):"—"}</td><td class="num">${c&&c.R!=null?c.R.toFixed(2):"—"}</td><td>${SRC[t.src]||""}</td>
+      <td><button class="ibtn" data-edit="${t.id}">${open?"سكّر / عدّل":"عدّل"}</button> <button class="ibtn" data-del="${t.id}" aria-label="احذف">🗑</button></td></tr>`; }).join("")
+    :`<tr><td colspan="12" class="sub">لسا ما سجلت ولا صفقة. اضغط "+ صفقة جديدة"، أو "سجّل بالسجل" من خطة الصفقة.</td></tr>`;
+  const cl=J.filter(t=>t.exit!=null).map(t=>({...t,...jCalc(t)}));
+  const st=(l,v,c="")=>`<div class="stat"><div class="l">${l}</div><div class="v ${c}">${v}</div></div>`;
+  if(!cl.length){ $("jStats").innerHTML=st("صفقات مسكّرة","0")+st("مفتوحة",J.length); return; }
+  const wins=cl.filter(t=>t.pnl>0), tot=cl.reduce((s,t)=>s+t.pnl,0), gp=wins.reduce((s,t)=>s+t.pnl,0), gl=-cl.filter(t=>t.pnl<=0).reduce((s,t)=>s+t.pnl,0);
+  const Rs=cl.filter(t=>t.R!=null), avgR=Rs.length?Rs.reduce((s,t)=>s+t.R,0)/Rs.length:null;
+  const by=k=>{ const m={}; cl.forEach(t=>{ const key=k(t); (m[key]=m[key]||{n:0,w:0,p:0}); m[key].n++; if(t.pnl>0) m[key].w++; m[key].p+=t.pnl; }); return m; };
+  const coins=Object.entries(by(t=>t.sym)).sort((a,b)=>b[1].p-a[1].p);
+  const sides=by(t=>t.dir>0?"L":"S"), wr=o=>o?`${(o.w/o.n*100).toFixed(0)}% (${o.n})`:"—";
+  $("jStats").innerHTML=st("صفقات مسكّرة",cl.length)+st("نسبة الربح",(wins.length/cl.length*100).toFixed(0)+"%",wins.length/cl.length>=.5?"pos":"neg")
+    +st("صافي الربح",(tot>=0?"+$":"-$")+Math.abs(tot).toFixed(2),tot>=0?"pos":"neg")+st("عامل الربح",gl>0?(gp/gl).toFixed(2):"∞",gp>=gl?"pos":"neg")
+    +st("متوسط R",avgR==null?"—":avgR.toFixed(2),avgR>=0?"pos":"neg")+st("لونغ / شورت",`<span style="font-size:13px">${wr(sides.L)} / ${wr(sides.S)}</span>`)
+    +st("أحسن عملة",`<span style="font-size:13px">${base(coins[0][0])} ${coins[0][1].p>=0?"+":""}${coins[0][1].p.toFixed(1)}$</span>`)
+    +st("أسوأ عملة",`<span style="font-size:13px">${base(coins[coins.length-1][0])} ${coins[coins.length-1][1].p.toFixed(1)}$</span>`)+st("مفتوحة",J.length-cl.length);
+}
+function jOpenForm(t){
+  jEdit=t&&t.id?t.id:null; $("jFormTitle").textContent=jEdit?"عدّل الصفقة":"صفقة جديدة"; const f=$("jForm"); f.hidden=false;
+  const d=t||{}; $("jSym").value=d.sym||S.symbol; $("jSide").value=String(d.dir||1); $("jEntry").value=d.entry??""; $("jSl").value=d.sl??""; $("jTp").value=d.tp??"";
+  $("jMargin").value=d.margin??""; $("jLev").value=d.lev??Math.min(CP.lev,10); $("jOpen").value=dtLocal(d.tOpen||Date.now()); $("jExit").value=d.exit??"";
+  $("jClose").value=d.tClose?dtLocal(d.tClose):""; $("jSrc").value=d.src||"manual"; $("jNote").value=d.note||"";
+  document.querySelectorAll("#tabsNav button").forEach(x=>x.classList.toggle("on",x.dataset.tab==="journal")); ["journal","opt","trades","settings"].forEach(t=>$("tab-"+t).hidden=t!=="journal");
+  f.scrollIntoView({behavior:"smooth",block:"start"}); }
+$("jNew").addEventListener("click",()=>jOpenForm(null));
+$("jCancel").addEventListener("click",()=>{ $("jForm").hidden=true; jEdit=null; });
+$("jNowPx").addEventListener("click",async()=>{ const s=$("jSym").value.trim().toUpperCase(); let px=s===S.symbol?S.candles[S.candles.length-1]?.c:S.prices[s];
+  if(px==null){ try{ px=+(await getJSON(`/fapi/v1/ticker/price?symbol=${s}`)).price; }catch(e){} } if(px){ $("jExit").value=px; if(!$("jClose").value) $("jClose").value=dtLocal(Date.now()); } });
+$("jForm").addEventListener("submit",e=>{ e.preventDefault(); let sym=$("jSym").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,""); if(sym&&!sym.endsWith("USDT")) sym+="USDT";
+  const num=id=>{ const v=$(id).value; return v===""?null:+v; };
+  const t={ id:jEdit||Date.now().toString(36)+Math.random().toString(36).slice(2,6), sym, dir:+$("jSide").value, entry:num("jEntry"), sl:num("jSl"), tp:num("jTp"),
+    margin:num("jMargin"), lev:num("jLev")||1, tOpen:fromLocal($("jOpen").value)||Date.now(), exit:num("jExit"), tClose:null, src:$("jSrc").value, note:$("jNote").value.trim() };
+  if(!sym||!t.entry||!t.margin){ toast("لازم تعبّي العملة وسعر الدخول والهامش."); return; }
+  if(t.exit!=null) t.tClose=fromLocal($("jClose").value)||Date.now();
+  const i=J.findIndex(x=>x.id===t.id); if(i>=0) J[i]=t; else J.push(t); saveJ(); $("jForm").hidden=true; jEdit=null; renderJournal(); jPrices(); toast("انحفظت الصفقة ✓"); });
+$("jBody").addEventListener("click",e=>{ const ed=e.target.closest("[data-edit]"), dl=e.target.closest("[data-del]"), go=e.target.closest("[data-go]");
+  if(go){ e.preventDefault(); selectSym(go.dataset.go); return; }
+  if(ed){ const t=J.find(x=>x.id===ed.dataset.edit); jOpenForm(t); if(t&&t.exit==null) setTimeout(()=>$("jExit").focus(),300); }
+  if(dl){ if(dl.dataset.sure){ J=J.filter(x=>x.id!==dl.dataset.del); saveJ(); renderJournal(); } else { dl.dataset.sure="1"; dl.textContent="أكّد الحذف"; setTimeout(()=>{ if(dl.isConnected){ delete dl.dataset.sure; dl.textContent="🗑"; } },3000); } } });
+async function jPrices(){ if(!J.some(t=>t.exit==null)||online===false) return; try{ const all=await getJSON("/fapi/v1/ticker/price"); all.forEach(x=>S.prices[x.symbol]=+x.price); renderJournal(); }catch(e){} }
+setInterval(jPrices,30000);
+$("jExport").addEventListener("click",()=>{ const blob=new Blob([JSON.stringify({v:1,journal:J,profiles:PROF,params:P,watch:WATCH},null,1)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`radar-backup-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000); });
+$("jImport").addEventListener("change",async e=>{ const f=e.target.files[0]; if(!f) return; try{ const d=JSON.parse(await f.text());
+  if(Array.isArray(d.journal)){ const ids=new Set(J.map(x=>x.id)); d.journal.forEach(t=>{ if(!ids.has(t.id)) J.push(t); }); saveJ(); }
+  if(d.profiles){ PROF=Object.assign({},d.profiles,PROF); store.set("frp_prof",PROF); refreshCP(); }
+  renderJournal(); toast("رجعت النسخة الاحتياطية ✓"); }catch(err){ toast("الملف مو نسخة احتياطية صحيحة."); } e.target.value=""; });
+const SYS_J=`إنت مدرّب تداول فيوتشر. بتاخد سجل صفقات حقيقية لمتداول (عملة، اتجاه، دخول، ستوب، خروج، هامش، رافعة، ربح، R، مصدر الفكرة، ملاحظاته، وقت الفتح والإغلاق).
+حلّل بصراحة ولطف: وين عم يربح ووين عم يخسر، هل عم يحترم الستوب، هل الرافعة كبيرة، هل عم يسكّر الربح بكير أو يخلي الخسارة تكبر، أي مصدر أفكار (إشارة الأداة، الوكيل، قراره) أنجح، أي أوقات وعملات أحسن.
+اللهجة السورية، مختصر وعملي. JSON بس:
+{"summary":"","strengths":[""],"mistakes":[""],"rules":["قاعدة عملية يلتزم فيها"],"score":0-100}`;
+$("jAi").addEventListener("click",async()=>{ const box=$("jAiRes"), b=$("jAi"); const cl=J.filter(t=>t.exit!=null);
+  if(cl.length<3){ box.innerHTML='<p class="sub">سجّل 3 صفقات مسكّرة عالأقل لحتى يقدر الوكيل يقيّمك.</p>'; return; }
+  b.disabled=true; box.innerHTML='<p class="sub"><span class="spin"></span> الوكيل عم يراجع صفقاتك…</p>';
+  try{ const data=cl.slice(-60).map(t=>{ const c=jCalc(t); return {symbol:t.sym,side:t.dir>0?"LONG":"SHORT",entry:t.entry,sl:t.sl,tp:t.tp,exit:t.exit,margin:t.margin,leverage:t.lev,pnl_usd:+c.pnl.toFixed(2),pnl_pct_margin:+c.pctM.toFixed(1),R:c.R==null?null:+c.R.toFixed(2),source:t.src,note:t.note,opened:new Date(t.tOpen).toString(),hours_held:t.tClose?+((t.tClose-t.tOpen)/36e5).toFixed(1):null}; });
+    const d=await callClaude(SYS_J,{trades:data,open_trades:J.length-cl.length});
+    box.innerHTML=`<div class="panel aicard" style="margin-bottom:12px"><h3>تقييم الوكيل <span class="num" style="color:var(--ai)">${d.score??"—"}/100</span></h3><p>${esc(d.summary)}</p>
+      ${(d.strengths||[]).length?`<p class="ok" style="margin:8px 0 0"><b>نقاط قوتك</b></p><ul>${d.strengths.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+      ${(d.mistakes||[]).length?`<p class="neg" style="margin:8px 0 0"><b>أغلاطك</b></p><ul>${d.mistakes.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+      ${(d.rules||[]).length?`<p style="margin:8px 0 0;color:var(--warn)"><b>قواعد التزم فيها</b></p><ul>${d.rules.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</div>`; }
+  catch(e){ box.innerHTML=`<p class="err">${esc(e.message)}</p>`; } b.disabled=false; });
+
 /* ================= settings ================= */
 const FIELDS=Object.keys(DEFAULTS);
 function fillForm(){ FIELDS.forEach(k=>{ const el=$(k); if(!el) return; if(el.type==="checkbox") el.checked=!!P[k]; else el.value=P[k]; }); $("apiKey").value=store.get("frp_key",""); $("model").value=store.get("frp_model","claude-sonnet-5"); }
 $("setForm").addEventListener("submit",e=>{ e.preventDefault();
   FIELDS.forEach(k=>{ const el=$(k); if(!el) return; P[k]=el.type==="checkbox"?el.checked:(el.value!==""&&isFinite(+el.value)?+el.value:DEFAULTS[k]); });
   store.set("frp_params",P); store.set("frp_key",$("apiKey").value.trim()); store.set("frp_model",$("model").value.trim()||"claude-sonnet-5");
-  S.A=analyze(S.candles,P); renderAll(false); loadMTF(); S.scan=null; $("scards").innerHTML='<p class="sub">الإعدادات تغيرت. شغّل الفحص من جديد.</p>'; toast("انحفظت الإعدادات وانطبقت ✓"); });
+  refreshCP(); S.A=analyze(S.candles,CP); renderAll(false); loadMTF(); S.scan=null; $("scards").innerHTML='<p class="sub">الإعدادات تغيرت. شغّل الفحص من جديد.</p>'; toast("انحفظت الإعدادات وانطبقت ✓"); });
 $("btnReset").addEventListener("click",()=>{ P=Object.assign({},DEFAULTS); fillForm(); toast("رجعت القيم الافتراضية. اضغط احفظ لتطبّقها."); });
 
 /* ================= events ================= */
@@ -798,7 +1057,7 @@ $("scards").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const c=e.targe
 $("aiScanRes").addEventListener("click",e=>{ const a=e.target.closest("[data-s]"); if(a){ e.preventDefault(); const s=a.dataset.s.toUpperCase(); selectSym(s.endsWith("USDT")?s:s+"USDT"); } });
 $("typeTog").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; S.chartType=b.dataset.v; [...$("typeTog").children].forEach(x=>x.classList.toggle("on",x===b)); clearAi(); drawAll(false); });
 $("indTog").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; const k=b.dataset.v; S.ind[k]=!S.ind[k]; b.classList.toggle("on",S.ind[k]); store.set("frp_ind",S.ind); drawAll(false); });
-document.querySelector(".tabs").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b)); ["trades","settings"].forEach(t=>$("tab-"+t).hidden=t!==b.dataset.tab); });
+document.querySelector(".tabs").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b)); ["journal","opt","trades","settings"].forEach(t=>$("tab-"+t).hidden=t!==b.dataset.tab); if(b.dataset.tab==="opt") oInfo(); });
 $("btnScan").addEventListener("click",()=>scanAll(false));
 $("btnAi").addEventListener("click",runAi); $("btnAiScan").addEventListener("click",runAiScan); $("btnAiClear").addEventListener("click",clearAi);
 $("btnNotif").addEventListener("click",async()=>{ if(!S.notif){ try{ if("Notification" in window&&Notification.permission==="default") await Notification.requestPermission(); }catch(e){} S.notif=true; beep(); } else S.notif=false; $("btnNotif").textContent="🔔 التنبيهات: "+(S.notif?"شغالة":"مطفية"); });
@@ -806,7 +1065,8 @@ setInterval(()=>{ if(S.mode==="live") setFeeds(); if(S.ticker&&S.mode==="live") 
 
 /* ================= boot ================= */
 fillForm(); renderTf(); [...$("indTog").children].forEach(b=>b.classList.toggle("on",!!S.ind[b.dataset.v])); renderChips(); renderMTF();
-if(initCharts()){ loadSymbols(); loadSymbol(); }
+renderJournal(); renderProfBadge();
+if(initCharts()){ loadSymbols(); loadSymbol().then(jPrices); }
 </script>
 </body>
 </html>
