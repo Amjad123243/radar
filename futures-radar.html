@@ -707,7 +707,7 @@ function renderTf(){ $("tfSeg").innerHTML=TFS.map(t=>`<button data-tf="${t}" cla
   $("stfSeg").innerHTML=["1m","5m","15m","30m","1h","4h"].map(t=>`<button data-v="${t}" class="${t===S.scanTf?'on':''}">${t}</button>`).join("");
   $("minSeg").innerHTML=[40,50,60,70,80].map(v=>`<button data-v="${v}" class="${v===S.minStr?'on':''}">${v}%</button>`).join(""); }
 function renderAll(fit){ renderQuote(); renderPlanSafe(); renderStats(); renderTrades(); drawAll(fit); }
-function setFeeds(){ $("dKline").className="dot "+(S.mode==="live"?(S.ws&&S.ws.readyState===1?"on":""):S.mode==="demo"?"demo":""); $("dTick").className="dot "+(S.ticker?"on":S.mode==="demo"?"demo":""); }
+function setFeeds(){ const fresh=Date.now()-(S.lastKline||0)<15000; $("dKline").className="dot "+(S.mode==="live"?(fresh?"on":""):S.mode==="demo"?"demo":""); $("dTick").className="dot "+(S.mode==="live"?(S.ticker?"on":""):S.mode==="demo"?"demo":""); }
 
 /* ================= MTF ================= */
 async function loadMTF(){
@@ -734,7 +734,7 @@ function renderMTF(){
 async function loadSymbol(){
   const sym=S.symbol, tf=S.tf; closeWS(); S.mode=""; S.flow=null; $("flow").innerHTML='<p class="sub"><span class="spin"></span> عم يحمّل…</p>'; S.lastSigKey=""; S.ticker=null; S.mtf={}; clearAi(); renderMTF(); setFeeds();
   try{ const [k,f,t]=await Promise.all([fetchKlines(sym,tf,1000),fetchFunding(sym),fetchTicker(sym)]); if(sym!==S.symbol||tf!==S.tf) return;
-    S.candles=k; S.funding=f; S.ticker=t; S.mode=online===false?"demo":"live"; if(S.mode==="live"){ showBanner(""); openWS(); } }
+    S.candles=k; S.funding=f; S.ticker=t; S.lastKline=Date.now(); S.mode=online===false?"demo":"live"; if(S.mode==="live"){ showBanner(""); openWS(); } }
   catch(e){ if(sym!==S.symbol||tf!==S.tf) return;
     if(/مو موجود/.test(e.message)){ toast(`${sym} مو موجود على Binance Futures.`); if(sym!=="BTCUSDT"){ S.symbol="BTCUSDT"; return loadSymbol(); } }
     online=false; S.candles=demoKlines(sym,tf,1000); S.funding=null; S.mode="demo";
@@ -742,22 +742,42 @@ async function loadSymbol(){
   setFeeds(); refreshCP(); S.A=analyze(S.candles,CP); renderAll(true); renderChips(); loadMTF(); loadFlow();
 }
 function closeWS(){ if(S.ws){ S.ws.onclose=null; try{S.ws.close();}catch(e){} S.ws=null; } }
+// Binance moved kline/ticker streams to /market (legacy URL stopped delivering them on 2026-04-23)
+const WS_BASE="wss://fstream.binance.com/market/stream?streams=";
+let wsPend=null, wsRaf=0;
+function applyBar(bar,sym,tf){
+  if(sym!==S.symbol||tf!==S.tf) return; S.lastKline=Date.now();
+  const c=S.candles, lb=c[c.length-1]; if(!lb) return;
+  if(bar.t===lb.t) c[c.length-1]=bar;
+  else if(bar.t>lb.t){ c.push(bar); if(c.length>1500) c.shift(); S.A=analyze(c,CP); renderAll(false); fetchFunding(sym).then(f=>{ if(sym===S.symbol) S.funding=f; }); return; }
+  else return;
+  wsPend=bar; if(!wsRaf) wsRaf=requestAnimationFrame(()=>{ wsRaf=0; const b=wsPend; if(!b) return; wsPend=null;
+    if(S.chartType==="ha") CH.candle.setData(heikin(S.candles).map(x=>({time:T(x.t),open:x.o,high:x.h,low:x.l,close:x.c})));
+    else CH.candle.update({time:T(b.t),open:b.o,high:b.h,low:b.l,close:b.c});
+    CH.lineS.update({time:T(b.t),value:b.c}); CH.vol.update(volBar(b)); renderQuote(); if(S.A&&S.A.bt.open) renderPlan(); });
+}
 function openWS(){
   const sym=S.symbol, tf=S.tf, l=sym.toLowerCase();
-  try{ S.ws=new WebSocket(`wss://fstream.binance.com/stream?streams=${l}@kline_${tf}/${l}@ticker`); }catch(e){ return; }
-  let pend=null, raf=0;
-  S.ws.onopen=setFeeds;
-  S.ws.onmessage=ev=>{ const msg=JSON.parse(ev.data), d=msg.data; if(!d) return;
-    if(d.e==="24hrTicker"){ S.ticker={c:+d.c,P:+d.P,h:+d.h,l:+d.l,q:+d.q}; return; }
-    const k=d.k; if(!k) return; const bar={t:k.t,o:+k.o,h:+k.h,l:+k.l,c:+k.c,v:+k.v,q:+k.q}, c=S.candles, lb=c[c.length-1];
-    if(bar.t===lb.t) c[c.length-1]=bar;
-    else if(bar.t>lb.t){ c.push(bar); if(c.length>1500) c.shift(); S.A=analyze(c,CP); renderAll(false); fetchFunding(sym).then(f=>{ if(sym===S.symbol) S.funding=f; }); return; }
-    pend=bar; if(!raf) raf=requestAnimationFrame(()=>{ raf=0; if(!pend) return;
-      if(S.chartType==="ha") CH.candle.setData(heikin(S.candles).map(x=>({time:T(x.t),open:x.o,high:x.h,low:x.l,close:x.c})));
-      else CH.candle.update({time:T(pend.t),open:pend.o,high:pend.h,low:pend.l,close:pend.c});
-      CH.lineS.update({time:T(pend.t),value:pend.c}); CH.vol.update(volBar(pend)); renderQuote(); if(S.A.bt.open) renderPlan(); pend=null; }); };
-  S.ws.onclose=()=>{ setFeeds(); if(sym===S.symbol&&tf===S.tf&&S.mode==="live") setTimeout(()=>{ if(sym===S.symbol&&tf===S.tf&&!S.ws) openWS(); else if(sym===S.symbol&&tf===S.tf&&S.ws&&S.ws.readyState>1){ S.ws=null; openWS(); } },3000); };
+  try{ S.ws=new WebSocket(`${WS_BASE}${l}@kline_${tf}/${l}@ticker`); }catch(e){ return; }
+  const ws=S.ws;
+  ws.onopen=setFeeds;
+  ws.onmessage=ev=>{ if(ws!==S.ws) return; let d; try{ d=JSON.parse(ev.data).data; }catch(e){ return; } if(!d) return;
+    if(d.e==="24hrTicker"){ S.ticker={c:+d.c,P:+d.P,h:+d.h,l:+d.l,q:+d.q}; S.lastTick=Date.now(); return; }
+    const k=d.k; if(!k) return; applyBar({t:k.t,o:+k.o,h:+k.h,l:+k.l,c:+k.c,v:+k.v,q:+k.q},sym,tf); };
+  ws.onclose=()=>{ if(ws!==S.ws) return; S.ws=null; setFeeds(); if(sym===S.symbol&&tf===S.tf&&S.mode==="live") setTimeout(()=>{ if(sym===S.symbol&&tf===S.tf&&!S.ws&&S.mode==="live") openWS(); },3000); };
 }
+// Fallback: if the stream is silent for 10s, poll REST every 4s so the chart never freezes
+let pollBusy=false;
+setInterval(async()=>{
+  if(S.mode!=="live"||!S.candles.length||pollBusy||document.visibilityState!=="visible") return;
+  if(Date.now()-(S.lastKline||0)<10000) return;
+  pollBusy=true; const sym=S.symbol, tf=S.tf;
+  try{ const k=await fetchKlines(sym,tf,2); k.forEach(b=>applyBar(b,sym,tf)); S.pollMode=true;
+    if(Date.now()-(S.lastTick||0)>10000){ const t=await fetchTicker(sym); if(t&&sym===S.symbol) S.ticker=t; }
+    if(!S.ws) openWS(); }catch(e){}
+  pollBusy=false; setFeeds();
+},4000);
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"&&S.mode==="live"&&S.candles.length){ const sym=S.symbol,tf=S.tf; fetchKlines(sym,tf,3).then(k=>k.forEach(b=>applyBar(b,sym,tf))).catch(()=>{}); if(!S.ws||S.ws.readyState>1){ S.ws=null; openWS(); } } });
 setInterval(()=>{ if(S.candles.length) loadMTF(); },60000);
 
 /* ================= symbols & search ================= */
