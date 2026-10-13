@@ -25,7 +25,7 @@
   --warn:#e8b949; --warn-bg:rgba(232,185,73,.12);
   --ai:#94a0f7; --ai-bg:rgba(148,160,247,.12);
   --sans:"IBM Plex Sans Arabic","Segoe UI",Tahoma,system-ui,sans-serif;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --mono:"JetBrains Mono","IBM Plex Sans Arabic",ui-monospace,Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-text-size-adjust:100%}
@@ -137,6 +137,33 @@ a{color:inherit}
 .plab{position:absolute;left:8px;top:3px;z-index:3;font-family:var(--mono);font-size:10.5px;color:var(--faint);pointer-events:none}
 @media (max-width:600px){#cMain{height:340px}}
 .chartmsg{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:13px;z-index:4;pointer-events:none;text-align:center;padding:20px}
+/* MetaTrader 5 view */
+a.btn{text-decoration:none;display:inline-block}
+.seg.gold button.on{border-color:var(--accent-line);color:var(--accent);background:var(--accent-bg)}
+#viewSeg button{font-family:var(--sans);font-size:12.5px}
+.lockmsg{margin:0;padding:14px;color:var(--muted);font-size:13px}
+.mt5bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.mt5lv{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+.lvchip{display:inline-flex;align-items:baseline;gap:6px;background:var(--panel2);border:1px solid var(--line2);border-radius:7px;padding:4px 9px;font-size:12px;cursor:pointer;color:var(--muted)}
+.lvchip b{font-weight:600;color:var(--text)}
+.lvchip.entry{border-color:rgba(148,160,247,.45);background:var(--ai-bg)}
+.lvchip.sl{border-color:var(--short-line);background:var(--short-bg)}.lvchip.sl b{color:var(--short)}
+.lvchip.tp{border-color:var(--long-line);background:var(--long-bg)}.lvchip.tp b{color:var(--long)}
+.mt5frame{position:relative;height:min(74vh,760px);min-height:460px;background:var(--bg)}
+.mt5frame iframe{position:relative;z-index:1;display:block;width:100%;height:100%;border:0}
+.mt5ph{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted);font-size:13px}
+.mt5note{margin:0;padding:8px 12px 10px;border-top:1px solid var(--line);max-width:none}
+.mt5hint{margin:0;padding:7px 12px;font-size:12.5px;color:#f0d38f;background:var(--warn-bg);border-bottom:1px solid var(--line)}
+.ibtn{background:none;border:1px solid var(--line2);border-radius:5px;padding:1px 8px;cursor:pointer;font-size:12px;color:var(--text);margin-inline-start:6px}
+.chartbox.full .mt5hint{display:none}
+.chartbox.full{position:fixed;inset:0;z-index:60;border:0;border-radius:0;display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.chartbox.full #mt5Box{flex:1;min-height:0;display:flex;flex-direction:column}
+.chartbox.full .mt5frame{flex:1;height:auto;min-height:0}
+.chartbox.full .mt5note,.chartbox.full .legend,.chartbox.full #cInfo{display:none}
+html.noscroll,html.noscroll body{overflow:hidden}
+/* without a Twelve Data key: MT5 chart, news and calendar still work */
+.nokey .quote,.nokey #radarPanel,.nokey .side{display:none}
+.nokey .grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"chart" "tabs"}
 
 .side{display:flex;flex-direction:column;gap:14px;min-width:0}
 .plan{border-top:3px solid var(--line2)}
@@ -272,6 +299,7 @@ a{color:inherit}
     <button class="btn primary" type="submit">احفظ وشغّل</button>
   </form>
   <p class="note" id="setupNote">المفتاح بينحفظ بهالجهاز بس، وبيروح مباشرة لـ api.twelvedata.com.</p>
+  <p class="note">بدون المفتاح بيشتغل شارت MT5 والأخبار وأحداث الأسبوع تحت. الإشارات ورادار الفريمات بدهم المفتاح.</p>
 </section>
 
 <div id="appBody">
@@ -302,12 +330,28 @@ a{color:inherit}
   <section class="chartbox" id="chartBox">
     <div class="ctool">
       <span class="t" id="cTitle">الشارت</span>
-      <div class="legend"><span><i style="background:#e3a94b"></i>EMA 20</span><span><i style="background:#94a0f7"></i>EMA 50</span><span><i style="background:#22c29a"></i>أهداف</span><span><i style="background:#ec5a70"></i>وقف</span></div>
+      <div class="seg gold" id="viewSeg" role="group" aria-label="مصدر الشارت"><button type="button" data-view="app">شارت التطبيق</button><button type="button" data-view="mt5">MT5 لايف</button></div>
+      <div class="legend" id="cLegend"><span><i style="background:#e3a94b"></i>EMA 20</span><span><i style="background:#94a0f7"></i>EMA 50</span><span><i style="background:#22c29a"></i>أهداف</span><span><i style="background:#ec5a70"></i>وقف</span></div>
       <div class="spacer"></div>
       <span class="sub" id="cInfo"></span>
     </div>
-    <div class="pane" id="cMain"><div class="chartmsg" id="cMsg">عم يحمّل الشموع…</div></div>
-    <div class="pane" id="cRsi"><span class="plab">RSI 14</span></div>
+    <p class="lockmsg" id="lockMsg" hidden></p>
+    <div id="appChart">
+      <div class="pane" id="cMain"><div class="chartmsg" id="cMsg">عم يحمّل الشموع…</div></div>
+      <div class="pane" id="cRsi"><span class="plab">RSI 14</span></div>
+    </div>
+    <div id="mt5Box" hidden>
+      <div class="mt5bar">
+        <div class="mt5lv" id="mt5Levels"></div>
+        <div class="spacer"></div>
+        <button class="btn" id="mt5Full" type="button" aria-pressed="false">تكبير</button>
+        <a class="btn" id="mt5Open" href="https://web.metatrader.app/terminal" target="_blank" rel="noopener">افتح بتبويب</a>
+        <button class="btn" id="mt5Reload" type="button">تحديث</button>
+      </div>
+      <p class="mt5hint" id="mt5Hint">إذا ضلّت الشاشة تحت بيضا أو فاضية، ميتاتريدر ما سمح ينعرض جوّا التطبيق: اضغط «افتح بتبويب». <button class="ibtn" type="button" id="mt5HintOk">الشاشة شغّالة، خفي الملاحظة</button></p>
+      <div class="mt5frame" id="mt5Frame"><div class="mt5ph">عم يحمّل ميتاتريدر…</div></div>
+      <p class="note mt5note">سجّل دخول بحساب وسيطك جوّا الشاشة وافتح XAUUSD. كلمة السر بتروح لميتاتريدر مباشرة، والتطبيق ما بيشوفها. إذا ما حفظت الدخول من مرة لمرة، استعمل «افتح بتبويب». مستويات الإشارة فوق محسوبة من أسعار Twelve Data، وممكن تفرق شوي عن سعر وسيطك.</p>
+    </div>
   </section>
 
   <aside class="side">
@@ -342,6 +386,9 @@ a{color:inherit}
   </div>
   <div class="tabpane" id="tab-settings" hidden>
     <form id="setForm">
+      <fieldset class="fs"><legend>ميتاتريدر 5</legend><div class="form">
+        <div class="field" style="grid-column:1/-1;max-width:520px"><label for="mt5Url">رابط ميتاتريدر ويب</label><input type="text" inputmode="url" id="mt5Url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://web.metatrader.app/terminal"></div>
+      </div><p class="note">اتركه فاضي ليفتح ميتاتريدر ويب الرسمي. إذا وسيطك عنده رابط خاص لميتاتريدر ويب، الصقه هون.</p></fieldset>
       <fieldset class="fs"><legend>Twelve Data</legend><div class="form">
         <div class="field" style="grid-column:1/-1;max-width:520px"><label for="tdKey">مفتاح Twelve Data</label><input type="password" id="tdKey" autocomplete="off" spellcheck="false" placeholder="الصق المفتاح هون"></div>
       </div><p class="note" id="tdNote">الباقة المجانية: 8 طلبات بالدقيقة و800 باليوم. التطبيق بيوزّع الطلبات لحاله، وبيستعمل تقريباً 80 طلب بالساعة وهو مفتوح. النفط (WTI وبرنت) بيشتغل تلقائياً إذا رقّيت لباقة Grow.</p></fieldset>
@@ -351,7 +398,7 @@ a{color:inherit}
       </div><p class="note" id="aiNote"></p></fieldset>
       <div class="row" style="gap:8px"><button class="btn primary" type="submit">احفظ</button><button class="btn" type="button" id="btnTest">جرّب مفتاح Twelve Data</button><span class="sub" id="setMsg"></span></div>
     </form>
-    <p class="note">كل الإعدادات محفوظة بـ Safari على هالجهاز بس. مصدر الأخبار: ملف بيحدّثه Claude كل 3 ساعات بمستودع radar.</p>
+    <p class="note">كل الإعدادات محفوظة بـ Safari على هالجهاز بس. مصدر الأخبار: ملف بيحدّثه Claude كل 3 ساعات بمستودع radar. الإصدار 1.1.</p>
   </div>
 </div>
 </div>
@@ -366,7 +413,7 @@ a{color:inherit}
 /* ================= config ================= */
 const TD_BASE="https://api.twelvedata.com";
 const NEWS_URL="https://raw.githubusercontent.com/Amjad123243/radar/gold-oil-data/news.json";
-const NEWS_SEED={"updatedAt":"2026-09-29T11:18:45Z","news":{"updatedAt":"2026-09-29T11:18:45Z","items":[{"id":"kitco-fib-iran","assets":["gold"],"impact":{"gold":-1},"importance":3,"date":"2026-09-28","source":"Kitco","url":"https://www.kitco.com/opinion/2026-09-28/gold-breaks-key-fibonacci-support-iran-rejection-fuels-rate-hike-bets","title_orig":"Gold breaks key Fibonacci support as Iran rejection fuels rate hike bets","title_ar":"الذهب يكسر دعم فيبوناتشي رئيسي ورفض المقترح الإيراني يعزز رهانات رفع الفائدة","summary_ar":"رفض المقترح الإيراني زاد توقعات رفع الفائدة الأمريكية، فكسر الذهب مستوى دعم فني مهم."},{"id":"kitco-pm-0928","assets":["gold"],"impact":{"gold":-1},"importance":3,"date":"2026-09-28","source":"Kitco","url":"https://www.kitco.com/news/article/2026-09-28/gold-silver-sink-oil-yields-keep-fed-pressure-focus-kitco-pm-report","title_orig":"Gold, silver sink as oil, yields keep Fed pressure in focus - Kitco PM Report","title_ar":"الذهب والفضة يهبطان مع بقاء النفط والعوائد عامل ضغط على الفيدرالي","summary_ar":"صعود النفط وعوائد السندات أبقى الأنظار على احتمال تشديد الفيدرالي، فتراجع الذهب والفضة."},{"id":"te-gold-oil","assets":["gold"],"impact":{"gold":-1},"importance":3,"date":"2026-09-28","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/gold","title_orig":"Gold Falls as Higher Oil Prices Lift Rate-Hike Bets","title_ar":"الذهب يتراجع مع صعود النفط الذي رفع رهانات رفع الفائدة","summary_ar":"قفز النفط إلى نحو 107 دولارات بعد رفض ترامب المقترح الإيراني، فزادت توقعات رفع الفائدة."},{"id":"te-gold-7wk","assets":["gold"],"impact":{"gold":-1},"importance":2,"date":"2026-09-28","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/gold","title_orig":"Gold Hits 7-week Low","title_ar":"الذهب عند أدنى مستوى في 7 أسابيع","summary_ar":"تراجع الذهب لأدنى مستوى منذ أغسطس، وخسر نحو 6.7% خلال أربعة أسابيع."},{"id":"te-gold-holds","assets":["gold"],"impact":{"gold":-1},"importance":2,"date":"2026-09-29","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/gold","title_orig":"Gold Holds Losses on Rate Hike Concerns","title_ar":"الذهب يحافظ على خسائره وسط مخاوف رفع الفائدة","summary_ar":"الذهب قرب 4,100 دولار بعد هبوط 4%، والتركيز على بيانات التضخم PCE والوظائف الأمريكية."},{"id":"kitco-socgen","assets":["gold"],"impact":{"gold":-1},"importance":2,"date":"2026-09-28","source":"Kitco","url":"https://www.kitco.com/news/article/2026-09-28/gold-price-slide-below-200-dma-brings-critical-support-level-focus-socgen","title_orig":"Gold price slide below 200-DMA brings critical support level into focus – SocGen","title_ar":"نزول الذهب تحت متوسط 200 يوم يضع مستوى دعم حاسم تحت المجهر – سوسيتيه جنرال","summary_ar":"بحسب سوسيتيه جنرال، كسر متوسط 200 يوم يجعل مستوى الدعم التالي محور الحركة."},{"id":"kitco-statestreet","assets":["gold"],"impact":{"gold":0},"importance":2,"date":"2026-09-28","source":"Kitco","url":"https://www.kitco.com/news/article/2026-09-28/rising-bond-yields-could-push-gold-price-4000-state-streets-doshi-still","title_orig":"Rising bond yields could push gold price to $4,000, but State Street's Doshi still sees $5,000 by Q2 2027","title_ar":"صعود عوائد السندات قد يدفع الذهب إلى 4,000 دولار، وستيت ستريت ما زالت تتوقع 5,000 بالربع الثاني 2027","summary_ar":"دوشي من ستيت ستريت ترى خطر هبوط نحو 4,000 مع ارتفاع العوائد، مع إبقاء هدف 5,000 دولار على المدى الأبعد."},{"id":"kitco-bmo","assets":["gold"],"impact":{"gold":1},"importance":1,"date":"2026-09-28","source":"Kitco","url":"https://www.kitco.com/news/article/2026-09-28/gold-and-silver-prices-are-struggling-now-much-higher-long-term-base","title_orig":"Gold and silver prices are struggling now, but a much higher long-term base is building - BMO Capital Markets","title_ar":"الذهب والفضة يعانيان الآن، لكن قاعدة أعلى بكثير تتشكل على المدى الطويل – BMO","summary_ar":"BMO ترى أن الضعف الحالي لا يلغي بناء قاعدة سعرية أعلى على المدى البعيد."},{"id":"kitco-china-imports","assets":["gold"],"impact":{"gold":1},"importance":1,"date":"2026-09-28","source":"Kitco","url":"https://www.kitco.com/news/article/2026-09-28/china-pace-import-1700-tonnes-gold-2026-silver-price-faces-key-test-near","title_orig":"China on pace to import 1,700 tonnes of gold in 2026, silver price faces key test near $60/oz – Heraeus","title_ar":"الصين بطريقها لاستيراد 1,700 طن ذهب في 2026، والفضة أمام اختبار مهم قرب 60 دولاراً – هيريوس","summary_ar":"هيريوس تتوقع واردات صينية كبيرة من الذهب هذا العام، وتراقب الفضة قرب 60 دولاراً للأونصة."},{"id":"te-brent-105","assets":["oil"],"impact":{"oil":0},"importance":2,"date":"2026-09-29","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/brent-crude-oil","title_orig":"Brent Crude Holds At $105","title_ar":"برنت يستقر عند 105 دولارات","summary_ar":"الأسواق توازن بين جهود تهدئة التوتر بالشرق الأوسط وضبابية المحادثات الأمريكية الإيرانية."},{"id":"op-rally-hormuz","assets":["oil"],"impact":{"oil":1},"importance":2,"date":"2026-09-29","source":"OilPrice.com","url":"https://oilprice.com/Latest-Energy-News/World-News/Oil-Extends-Rally-Despite-Higher-Hormuz-Volume-Reports.html","title_orig":"Oil Extends Rally Despite Higher Hormuz Volume Reports","title_ar":"النفط يواصل صعوده رغم تقارير عن زيادة التدفقات عبر هرمز","summary_ar":"كبلر رصدت 12.8 مليون برميل يومياً عبر هرمز، لكن لجوء السعودية لمسارات بديلة مكلفة لتجنب هجمات الحوثيين أبقى الأسعار مرتفعة."},{"id":"op-india-russia","assets":["oil"],"impact":{"oil":0},"importance":1,"date":"2026-09-29","source":"OilPrice.com","url":"https://oilprice.com/Latest-Energy-News/World-News/India-Unlikely-to-Ditch-Russian-Oil-Despite-Trumps-100-Tariff-Threat.html","title_orig":"India Unlikely to Ditch Russian Oil Despite Trump's 100% Tariff Threat","title_ar":"الهند على الأرجح لن تتخلى عن النفط الروسي رغم تهديد ترامب برسوم 100%","summary_ar":"التوقعات تشير إلى استمرار واردات الهند من الخام الروسي رغم التهديد بالرسوم."},{"id":"te-oil-uncertainty","assets":["oil"],"impact":{"oil":1},"importance":3,"date":"2026-09-28","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/crude-oil","title_orig":"Oil Rises as US-Iran Uncertainty Persists","title_ar":"النفط يرتفع مع استمرار الغموض بشأن المحادثات الأمريكية الإيرانية","summary_ar":"صعد خام غرب تكساس فوق 93 دولاراً مع شكوك حول الاتفاق طغت على عودة خط الأنابيب السعودي."},{"id":"te-saudi-pipeline","assets":["oil"],"impact":{"oil":-1},"importance":3,"date":"2026-09-28","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/crude-oil","title_orig":"Oil Trims Gains as Key Saudi Pipeline Restarts","title_ar":"النفط يقلص مكاسبه مع إعادة تشغيل خط أنابيب سعودي رئيسي","summary_ar":"السعودية أعادت نحو نصف تدفقات خط شرق-غرب إلى 3.5 مليون برميل يومياً، وهو بديل مهم لمضيق هرمز."},{"id":"op-spr-1982","assets":["oil"],"impact":{"oil":1},"importance":1,"date":"2026-09-28","source":"OilPrice.com","url":"https://oilprice.com/Latest-Energy-News/World-News/US-Strategic-Petroleum-Reserve-Falls-to-Lowest-Level-Since-1982.html","title_orig":"U.S. Strategic Petroleum Reserve Falls to Lowest Level Since 1982","title_ar":"الاحتياطي النفطي الاستراتيجي الأمريكي عند أدنى مستوى منذ 1982","summary_ar":"مخزون الطوارئ الأمريكي تراجع لأدنى مستوى منذ أكثر من أربعة عقود."},{"id":"op-qatar-lng","assets":["oil"],"impact":{"oil":0},"importance":1,"date":"2026-09-28","source":"OilPrice.com","url":"https://oilprice.com/Latest-Energy-News/World-News/Qatar-Extends-LNG-Force-Majeure-as-Hormuz-Crisis-Drags-On.html","title_orig":"Qatar Extends LNG Force Majeure as Hormuz Crisis Drags On","title_ar":"قطر تمدد القوة القاهرة على الغاز المسال مع استمرار أزمة هرمز","summary_ar":"استمرار تعطل الصادرات القطرية يعكس طول أمد أزمة المضيق."}]},"analysis":{"updatedAt":"2026-09-29T11:18:45Z","gold":{"sentiment":-1,"label":"سلبي","headline":"الذهب يرتد قليلاً بعد هبوط 4% وكسر متوسط 200 يوم","brief":"هبط الذهب نحو 4% يوم الإثنين لأدنى مستوى في 7 أسابيع، بعدما رفع صعود النفط رهانات رفع الفائدة الأمريكية. الأسواق تسعّر احتمالاً بنحو 70% لرفع الفائدة في أكتوبر، مع عوائد سندات عند أعلى مستوياتها منذ سنوات ودولار قوي. الذهب قرب 4,150 دولاراً مع ارتداد محدود اليوم، والأنظار على PCE يوم الأربعاء والوظائف يوم الجمعة.","drivers":["صعود النفط بعد رفض المقترح الإيراني","رهانات رفع الفائدة (نحو 70% لأكتوبر) وعوائد مرتفعة","كسر متوسط 200 يوم ودعم فيبوناتشي","طلب صيني قوي على المدى الطويل"],"watch":"PCE الأربعاء 30 سبتمبر، وISM الخميس، والوظائف الأمريكية الجمعة 2 أكتوبر."},"oil":{"sentiment":1,"label":"إيجابي","headline":"برنت فوق 105 دولارات مع تعثر المسار الأمريكي الإيراني","brief":"برنت قرب 105 دولارات وغرب تكساس بين 92 و94 دولاراً، وبرنت مرتفع نحو 16% خلال شهر. رفض ترامب المقترح الإيراني لإعادة فتح هرمز، وشكوك طهران في اتفاق قبل الانتخابات النصفية تبقي علاوة المخاطر مرتفعة. بالمقابل أعادت السعودية نصف طاقة خط شرق-غرب (3.5 مليون برميل يومياً)، وارتفعت التدفقات عبر هرمز إلى 12.8 مليون برميل يومياً بحسب كبلر.","drivers":["رفض المقترح الإيراني وشكوك حول اتفاق قريب","هجمات الحوثيين ومسارات تصدير سعودية مكلفة","عودة خط شرق-غرب السعودي بـ 3.5 مليون برميل يومياً","احتياطي أمريكي استراتيجي عند أدنى مستوى منذ 1982"],"watch":"مخزونات EIA الأربعاء، وأي تطور بمفاوضات هرمز."}},"calendar":{"updatedAt":"2026-09-29T11:18:45Z","events":[{"at":"2026-09-29T18:00:00+04:00","title_ar":"فرص العمل JOLTS وثقة المستهلك الأمريكية","country":"US","impact":2,"assets":["gold"],"note_ar":""},{"at":"2026-09-30T05:30:00+04:00","title_ar":"مؤشر مديري المشتريات الصناعي الرسمي بالصين","country":"CN","impact":2,"assets":["oil"],"note_ar":""},{"at":"2026-09-30T16:15:00+04:00","title_ar":"توظيف القطاع الخاص ADP","country":"US","impact":2,"assets":["gold"],"note_ar":""},{"at":"2026-09-30T16:30:00+04:00","title_ar":"مؤشر أسعار الإنفاق الاستهلاكي PCE","country":"US","impact":3,"assets":["gold","oil"],"note_ar":"مقياس التضخم المفضل للفيدرالي"},{"at":"2026-09-30T18:30:00+04:00","title_ar":"مخزونات النفط الخام الأمريكية EIA","country":"US","impact":3,"assets":["oil"],"note_ar":""},{"at":"2026-10-01T16:30:00+04:00","title_ar":"طلبات إعانة البطالة الأسبوعية","country":"US","impact":2,"assets":["gold"],"note_ar":""},{"at":"2026-10-01T18:00:00+04:00","title_ar":"مؤشر ISM الصناعي","country":"US","impact":3,"assets":["gold","oil"],"note_ar":""},{"at":"2026-10-02T16:30:00+04:00","title_ar":"الوظائف غير الزراعية ومعدل البطالة","country":"US","impact":3,"assets":["gold","oil"],"note_ar":"التوقعات: +100 ألف وظيفة، والبطالة 4.2%"}]},"meta":{"updatedAt":"2026-09-29T11:18:45Z","cadence_ar":"كل 3 ساعات من الأحد للجمعة","lastRun":{"status":"seed","at":"2026-09-29T11:18:45Z"}}};
+const NEWS_SEED={"updatedAt":"2026-10-06T19:26:47Z","news":{"updatedAt":"2026-10-06T19:26:47Z","items":[{"id":"te-gold-hike-bets-fade","assets":["gold"],"impact":{"gold":1},"importance":3,"date":"2026-10-06","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/gold","title_orig":"Gold Slightly Up as Fed Rate-Hike Bets Fade","title_ar":"الذهب يرتفع قليلاً مع تراجع رهانات رفع الفائدة","summary_ar":"الذهب صعد فوق 4,160 دولاراً، بعدما عوّضت بيانات الوظائف الضعيفة أثر قوة الدولار."},{"id":"te-gold-dollar-yields","assets":["gold"],"impact":{"gold":-1},"importance":2,"date":"2026-10-06","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/gold","title_orig":"Gold Pressured as Dollar, Yields Weigh","title_ar":"الذهب تحت الضغط مع قوة الدولار وارتفاع العوائد","summary_ar":"الذهب تراجع باتجاه 4,100 دولار مع صعود الدولار وعوائد السندات الأمريكية."},{"id":"kitco-am-1006","assets":["gold"],"impact":{"gold":1},"importance":2,"date":"2026-10-06","source":"Kitco","url":"https://www.kitco.com/news/article/2026-10-06/gold-silver-prices-rise-yields-ease-december-fed-risk-remains-kitco-am","title_orig":"Gold, silver prices rise as yields ease but December Fed risk remains - Kitco AM Report","title_ar":"الذهب والفضة يرتفعان مع تراجع العوائد، وخطر الفيدرالي في ديسمبر ما زال قائماً","summary_ar":"الأسعار ارتفعت مع هدوء العوائد، لكن احتمال تحرك الفيدرالي في ديسمبر بقي عامل خطر."},{"id":"kitco-cb-august","assets":["gold"],"impact":{"gold":1},"importance":2,"date":"2026-10-06","source":"Kitco","url":"https://www.kitco.com/news/article/2026-10-06/central-banks-add-39-net-tonnes-gold-august-china-uzbekistan-and-poland","title_orig":"Central banks add 39 net tonnes of gold in August with China, Uzbekistan and Poland leading purchases – World Gold Council","title_ar":"البنوك المركزية تضيف 39 طناً صافياً من الذهب في أغسطس، والصين وأوزبكستان وبولندا بالصدارة","summary_ar":"بحسب مجلس الذهب العالمي، بلغت مشتريات البنوك المركزية الصافية 39 طناً في أغسطس."},{"id":"kitco-ice-london","assets":["gold"],"impact":{"gold":0},"importance":1,"date":"2026-10-06","source":"Kitco","url":"https://www.kitco.com/news/article/2026-10-06/ice-brings-futures-trading-londons-190-billion-day-physical-gold-market","title_orig":"ICE brings futures trading to London's $190 billion-a-day physical gold market","title_ar":"بورصة ICE تُدخل تداول العقود الآجلة إلى سوق الذهب الفعلي في لندن","summary_ar":"الخطوة تخص سوق لندن للذهب الفعلي الذي يبلغ تداوله نحو 190 مليار دولار يومياً."},{"id":"te-gold-jobs","assets":["gold"],"impact":{"gold":1},"importance":2,"date":"2026-10-05","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/gold","title_orig":"Gold Rises as Fed Rate Hike Bets Ease","title_ar":"الذهب يرتفع مع تراجع رهانات رفع الفائدة","summary_ar":"الذهب صعد فوق 4,150 دولاراً بعد بيانات توظيف أضعف من المتوقع."},{"id":"kitco-heraeus-1005","assets":["gold"],"impact":{"gold":-1},"importance":2,"date":"2026-10-05","source":"Kitco","url":"https://www.kitco.com/news/article/2026-10-05/gold-price-suffers-under-oil-yield-pressures-mexicos-silver-production","title_orig":"Gold price suffers under oil, yield pressures, Mexico's silver production weakens in July – Heraeus","title_ar":"الذهب يعاني تحت ضغط النفط والعوائد – هيريوس","summary_ar":"هيريوس ترى أن أسعار النفط والعوائد تضغط على الذهب، وتشير إلى ضعف إنتاج الفضة في المكسيك في يوليو."},{"id":"kitco-flat-1005","assets":["gold"],"impact":{"gold":0},"importance":2,"date":"2026-10-05","source":"Kitco","url":"https://www.kitco.com/opinion/2026-10-05/gold-flat-oil-fears-fade-yields-and-dollar-cap-upside","title_orig":"Gold flat as oil fears fade, but yields and dollar cap the upside","title_ar":"الذهب مستقر مع انحسار مخاوف النفط، والعوائد والدولار يحدّان من الصعود","summary_ar":"مخاوف النفط تراجعت، لكن العوائد والدولار ما زالا يحدّان من ارتفاع الذهب."},{"id":"kitco-nagel","assets":["gold"],"impact":{"gold":1},"importance":1,"date":"2026-10-05","source":"Kitco","url":"https://www.kitco.com/news/article/2026-10-05/lbma-2026-central-banks-arent-done-gold-geopolitical-risks-reshape-reserves","title_orig":"LBMA 2026: Central banks aren't done with gold as geopolitical risks reshape reserves – Bundesbank's Nagel","title_ar":"ناغل من البوندسبنك: البنوك المركزية لم تنتهِ من شراء الذهب","summary_ar":"في مؤتمر LBMA، قال ناغل إن المخاطر الجيوسياسية تعيد تشكيل الاحتياطيات وإن طلب البنوك المركزية على الذهب مستمر."},{"id":"te-oil-pares","assets":["oil"],"impact":{"oil":0},"importance":2,"date":"2026-10-06","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/crude-oil","title_orig":"Crude Oil Pares Losses","title_ar":"النفط يقلّص خسائره","summary_ar":"خام غرب تكساس قرب 89.50 دولاراً بعد نزوله تحت 87، وسط إشارات متضاربة بين تعافي الإمدادات والتوتر الجيوسياسي."},{"id":"te-oil-1m-low","assets":["oil"],"impact":{"oil":-1},"importance":3,"date":"2026-10-06","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/crude-oil","title_orig":"Crude Oil at Over 1-Month Low","title_ar":"النفط عند أدنى مستوى في أكثر من شهر","summary_ar":"الخام تراجع نحو 87 دولاراً، الأدنى منذ أوائل سبتمبر، مع تحسن صادرات الشرق الأوسط وسحب مجموعة السبع من الاحتياطيات."},{"id":"te-brent-100","assets":["oil"],"impact":{"oil":1},"importance":2,"date":"2026-10-06","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/brent-crude-oil","title_orig":"Brent Back to $100","title_ar":"برنت يعود إلى 100 دولار","summary_ar":"برنت تعافى من قاع الجلسة عند 97.80 دولاراً، بعدما عوّض التوتر الجيوسياسي أثر إجراءات زيادة الإمدادات."},{"id":"op-east-west","assets":["oil"],"impact":{"oil":-1},"importance":2,"date":"2026-10-06","source":"OilPrice.com","url":"https://oilprice.com/Latest-Energy-News/World-News/Saudi-East-West-Pipeline-Moves-58-Million-Barrels-as-Red-Sea-Route-Recovers.html","title_orig":"Saudi East-West Pipeline Moves 5.8 Million Barrels as Red Sea Route Recovers","title_ar":"خط شرق-غرب السعودي ينقل 5.8 مليون برميل مع تعافي مسار البحر الأحمر","summary_ar":"الخط السعودي ينقل الخام بطاقة 5.8 مليون برميل يومياً مع تحسن الملاحة في البحر الأحمر."},{"id":"op-gulf-81","assets":["oil"],"impact":{"oil":-1},"importance":2,"date":"2026-10-06","source":"OilPrice.com","url":"https://oilprice.com/Latest-Energy-News/World-News/Gulf-Oil-Exports-Recover-to-81-of-Pre-War-Levels.html","title_orig":"Gulf Oil Exports Recover to 81% of Pre-War Levels","title_ar":"صادرات نفط الخليج تتعافى إلى 81% من مستويات ما قبل الحرب","summary_ar":"شحنات الخام من الخليج تقترب تدريجياً من أحجام ما قبل الحرب."},{"id":"op-iran-tankers","assets":["oil"],"impact":{"oil":1},"importance":2,"date":"2026-10-06","source":"OilPrice.com","url":"https://oilprice.com/Latest-Energy-News/World-News/At-Least-50-Iranian-Tankers-Are-Stuck-in-the-Gulf-as-US-Blockade-Holds.html","title_orig":"At Least 50 Iranian Tankers Are Stuck in the Gulf as U.S. Blockade Holds","title_ar":"50 ناقلة إيرانية على الأقل عالقة في الخليج مع استمرار الحصار الأمريكي","summary_ar":"الحصار الأمريكي ما زال يمنع ناقلات النفط الإيرانية من مغادرة الخليج."},{"id":"te-oil-exports-recover","assets":["oil"],"impact":{"oil":-1},"importance":3,"date":"2026-10-05","source":"Trading Economics","url":"https://tradingeconomics.com/commodity/crude-oil","title_orig":"Oil Extends Losses as Mideast Exports Recover","title_ar":"النفط يواصل خسائره مع تعافي صادرات الشرق الأوسط","summary_ar":"الخام نزل تحت 89 دولاراً لثالث جلسة على التوالي، بعدما قدّر جي بي مورغان عودة الشحنات إلى 98% من مستويات ما قبل الحرب."}]},"analysis":{"updatedAt":"2026-10-06T19:26:47Z","gold":{"sentiment":0,"label":"متضارب","headline":"الذهب يرتد مع تراجع رهانات رفع الفائدة، والدولار يحدّ من الصعود","brief":"الذهب قرب 4,175 دولاراً بارتفاع نحو 0.9% اليوم، لكنه ما زال متراجعاً نحو 5% خلال شهر. تقرير الوظائف الأمريكي الضعيف (29 ألف وظيفة مقابل 90 ألفاً متوقعة، والبطالة 4.2%) خفّض احتمال رفع الفائدة هذا الشهر إلى نحو 20%، مع بقاء احتمال ديسمبر قرب 70%. بالمقابل، الدولار قرب أعلى مستوى في 18 شهراً والعوائد المرتفعة يحدّان من الصعود.","drivers":["وظائف أمريكية ضعيفة خفّضت رهانات رفع الفائدة هذا الشهر","احتمال رفع الفائدة في ديسمبر ما زال قرب 70%","الدولار قرب أعلى مستوى في 18 شهراً وعوائد مرتفعة","البنوك المركزية اشترت 39 طناً صافياً في أغسطس"],"watch":"محضر الفيدرالي الأربعاء 7 أكتوبر، وطلبات البطالة الخميس، وتضخم سبتمبر يوم 14 أكتوبر."},"oil":{"sentiment":-1,"label":"سلبي","headline":"النفط عند أدنى مستوى في شهر مع تعافي الإمدادات","brief":"خام غرب تكساس قرب 89.6 دولاراً وبرنت قرب 100.8 دولار، بعد ثلاث جلسات من التراجع لامس فيها غرب تكساس أدنى مستوى منذ أوائل سبتمبر تحت 87 دولاراً. الضغط من عودة خط شرق-غرب السعودي إلى 5.8 مليون برميل يومياً، وسحب مجموعة السبع 100 مليون برميل من احتياطيات الطوارئ، وتعافي صادرات الشرق الأوسط. المخاطر باقية: اعتراض صاروخ حوثي، وتصعيد إيران هجماتها على الناقلات في هرمز.","drivers":["خط شرق-غرب السعودي عاد إلى 5.8 مليون برميل يومياً","مجموعة السبع تسحب 100 مليون برميل من احتياطيات الطوارئ","صادرات الشرق الأوسط تتعافى باتجاه مستويات ما قبل الحرب","هجمات على الناقلات في هرمز وصواريخ حوثية تُبقي المخاطر"],"watch":"مخزونات EIA الأربعاء 7 أكتوبر، وأي تطور في مضيق هرمز."}},"calendar":{"updatedAt":"2026-10-06T19:26:47Z","events":[{"at":"2026-10-07T18:30:00+04:00","title_ar":"مخزونات النفط الخام الأمريكية EIA","country":"US","impact":3,"assets":["oil"],"note_ar":""},{"at":"2026-10-07T22:00:00+04:00","title_ar":"محضر اجتماع الفيدرالي FOMC","country":"US","impact":3,"assets":["gold"],"note_ar":"محضر اجتماع 15-16 سبتمبر"},{"at":"2026-10-08T16:30:00+04:00","title_ar":"طلبات إعانة البطالة الأسبوعية","country":"US","impact":2,"assets":["gold"],"note_ar":""},{"at":"2026-10-09T18:00:00+04:00","title_ar":"ثقة المستهلك – جامعة ميشيغان (أولي)","country":"US","impact":2,"assets":["gold"],"note_ar":""},{"at":"2026-10-14T16:30:00+04:00","title_ar":"التضخم الأمريكي CPI لشهر سبتمبر","country":"US","impact":3,"assets":["gold","oil"],"note_ar":""},{"at":"2026-10-15T16:30:00+04:00","title_ar":"أسعار المنتجين PPI لشهر سبتمبر","country":"US","impact":2,"assets":["gold"],"note_ar":""}]},"meta":{"updatedAt":"2026-10-06T19:26:47Z","cadence_ar":"كل 3 ساعات من الأحد للجمعة","lastRun":{"status":"seed","at":"2026-10-06T19:26:47Z"}}};
 const INST={
   gold:{key:"gold",sym:"XAU/USD",name:"الذهب",short:"الذهب",dec:2,contract:100,unit:"أونصة",news:"gold"},
   wti:{key:"wti",sym:"WTI/USD",name:"خام غرب تكساس",short:"WTI",dec:2,contract:1000,unit:"برميل",news:"oil"},
@@ -389,8 +436,11 @@ const S={
   inst:"gold", tf:TF[store.get("gor_tf","1h")]?store.get("gor_tf","1h"):"1h", minStr:store.get("gor_min",50), alerts:store.get("gor_alerts",true), newsTab:"gold",
   quotes:{}, qAt:{}, series:{gold:{},wti:{},brent:{}}, oil:store.get("gor_oil",null),
   news:null, newsState:"wait", newsAt:0, usage:null, usageAt:0, halt:0, err:null, net:"wait",
-  sig:{}, planLines:[], aiLines:[], aiBusy:false, calls:0
+  sig:{}, planLines:[], aiLines:[], aiBusy:false, calls:0,
+  view:store.get("gor_view","app")==="mt5"?"mt5":"app"
 };
+const MT5_DEFAULT="https://web.metatrader.app/terminal";
+function mt5Url(){ const u=String(store.get("gor_mt5_url","")||"").trim(); return /^https:\/\/\S+$/i.test(u)?u:MT5_DEFAULT; }
 function tdKey(){ return String(store.get("gor_td_key","")||"").trim(); }
 function aiKey(){ return String(store.get("gor_ai_key","")||store.get("frp_key","")||"").trim(); }
 function aiModel(){ return String(store.get("gor_model","")||store.get("frp_model","")||"claude-sonnet-5").trim(); }
@@ -515,7 +565,9 @@ function split(k,tf){ const s=S.series[k][tf]; if(!s||!s.bars.length) return nul
   const q=S.quotes[k]; if(forming&&q&&isFinite(q.price)) bars[bars.length-1]=Object.assign({},last,{c:q.price,h:Math.max(last.h,q.price),l:Math.min(last.l,q.price),live:true});
   return {all:bars,done:forming?bars.slice(0,-1):bars,forming:forming?bars[bars.length-1]:null}; }
 function price(k){ const q=S.quotes[k]; if(q&&isFinite(q.price)) return q.price; const s=split(k,S.tf)||split(k,"1D"); return s?s.all[s.all.length-1].c:NaN; }
-function newsSent(k){ const a=S.news&&S.news.analysis&&S.news.analysis[INST[k].news]; return a&&isFinite(+a.sentiment)?{v:+a.sentiment,label:a.label||""}:{v:0,label:""}; }
+function newsSent(k){ const a=S.news&&S.news.analysis&&S.news.analysis[INST[k].news]; if(!a||!isFinite(+a.sentiment)) return {v:0,label:""};
+  const t=Date.parse(S.news.updatedAt||"")||0; if(Date.now()-t>48*36e5) return {v:0,label:"قديمة، ما انحسبت",stale:true};  /* week-old news must not sway the score */
+  return {v:+a.sentiment,label:a.label||""}; }
 function plan(k,tf){
   const sp=split(k,tf); if(!sp||sp.done.length<60) return null;
   const dp=split(k,"1D"), done=sp.done, C=done.map(b=>b.c);
@@ -580,13 +632,34 @@ function initChart(){ if(CH||!LC) return;
   main.timeScale().subscribeVisibleLogicalRangeChange(r=>{ if(r) rc.timeScale().setVisibleLogicalRange(r); });
   CH={main,candle,e20,e50,rc,rs,key:"",view:""}; }
 function tsec(ms){ return Math.floor(ms/1000)-new Date(ms).getTimezoneOffset()*60; }
+/* MetaTrader 5 view: the MT5 web terminal runs in a sandboxed frame (it cannot navigate the app away); the app never sees the login. */
+let mt5Src="";
+function ensureMt5(force){ const box=$("mt5Frame"), u=mt5Url(); $("mt5Open").href=u; const old=box.querySelector("iframe");
+  if(!force&&old&&mt5Src===u) return; if(old) old.remove();
+  const f=document.createElement("iframe"); f.title="ميتاتريدر 5";
+  f.setAttribute("sandbox","allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-storage-access-by-user-activation");
+  f.setAttribute("allow","fullscreen; clipboard-write"); f.setAttribute("allowfullscreen",""); f.src=u; box.appendChild(f); mt5Src=u; }
+function renderMt5Bar(){ const k=S.inst, I=INST[k], d=I.dec, lk=locked(k), p=!lk&&tdKey()&&S.plans&&S.plans[S.tf], el=$("mt5Levels"); let h;
+  if(p&&p.dir!=="WAIT"){ const L=p.dir==="BUY";
+    h='<span class="pill '+(L?"long":"short")+'">'+(L?"↑ شراء":"↓ بيع")+' · '+S.tf+'</span>'
+      +[["دخول",p.entry,"entry"],["وقف",p.sl,"sl"],["هدف 1",p.tp1,"tp"],["هدف 2",p.tp2,"tp"],["هدف 3",p.tp3,"tp"]].map(x=>'<button type="button" class="lvchip '+x[2]+'" data-copy="'+x[1].toFixed(d)+'" aria-label="انسخ '+x[0]+'">'+x[0]+' <b class="num">'+fmt(x[1],d)+'</b></button>').join(""); }
+  else if(p) h='<span class="pill wait">انتظار · '+S.tf+'</span><span class="sub">ما في دخول واضح على هالفريم حسب إشارة التطبيق.</span>';
+  else h='<span class="sub">'+(!tdKey()?"إشارات التطبيق بتطلع هون بعد ما تحط مفتاح Twelve Data.":lk?"إشارات "+esc(I.name)+" مش متاحة بباقتك، بس شارته بيطلع من ميتاتريدر إذا وسيطك بيوفّره.":"عم يحسب إشارة التطبيق…")+'</span>';
+  if(el.dataset.h!==h){ el.innerHTML=h; el.dataset.h=h; } }
+function setFull(on){ on=!!on&&S.view==="mt5"; $("chartBox").classList.toggle("full",on); document.documentElement.classList.toggle("noscroll",on); const b=$("mt5Full"); b.textContent=on?"تصغير":"تكبير"; b.setAttribute("aria-pressed",on); }
+function setView(v){ S.view=v==="mt5"?"mt5":"app"; store.set("gor_view",S.view); if(S.view!=="mt5") setFull(false); render(); }
+async function copyText(v){ try{ await navigator.clipboard.writeText(v); toast("انتسخ: "+v,1800); }
+  catch(e){ try{ const ta=document.createElement("textarea"); ta.value=v; ta.setAttribute("readonly",""); ta.style.cssText="position:fixed;top:0;opacity:0"; document.body.appendChild(ta); ta.select(); const ok=document.execCommand("copy"); ta.remove(); toast(ok?"انتسخ: "+v:"ما قدرت انسخ. الرقم: "+v,ok?1800:5000); }catch(e2){ toast("ما قدرت انسخ. الرقم: "+v,5000); } } }
 function renderChart(){
-  const k=S.inst, tf=S.tf, I=INST[k], msg=$("cMsg");
-  $("cTitle").textContent=I.sym+" · "+TF[tf].lbl;
-  if(locked(k)){ $("chartBox").hidden=true; return; } $("chartBox").hidden=false;
+  const k=S.inst, tf=S.tf, I=INST[k], msg=$("cMsg"), mt=S.view==="mt5", lk=locked(k);
+  document.querySelectorAll("#viewSeg button").forEach(b=>{ const on=b.dataset.view===S.view; b.classList.toggle("on",on); b.setAttribute("aria-pressed",on); });
+  $("cTitle").textContent=mt?"ميتاتريدر 5":I.sym+" · "+TF[tf].lbl;
+  $("mt5Box").hidden=!mt; $("appChart").hidden=mt||lk; $("cLegend").hidden=mt||lk; $("lockMsg").hidden=mt||!lk;
+  if(mt){ $("cInfo").textContent=""; $("mt5Hint").hidden=!!store.get("gor_mt5_ok",false); ensureMt5(); renderMt5Bar(); return; }
+  if(lk){ $("cInfo").textContent=""; $("lockMsg").textContent="شموع "+I.name+" مش ضمن باقتك بـ Twelve Data. اضغط «MT5 لايف» فوق لتشوف شارته من ميتاتريدر."; return; }
   if(!LC){ msg.hidden=false; msg.textContent="ما قدرت حمّل مكتبة الشارت. تأكد من الإنترنت وحدّث الصفحة."; return; }
   initChart(); const sp=split(k,tf);
-  if(!sp){ msg.hidden=false; msg.textContent=tdKey()?"عم يحمّل الشموع…":"حط مفتاح Twelve Data لتطلع الشموع."; CH.candle.setData([]); CH.e20.setData([]); CH.e50.setData([]); CH.rs.setData([]); CH.key=""; drawLines(null); return; }
+  if(!sp){ msg.hidden=false; msg.textContent=tdKey()?"عم يحمّل الشموع…":"حط مفتاح Twelve Data لتطلع شموع التطبيق، أو اضغط «MT5 لايف» فوق."; CH.candle.setData([]); CH.e20.setData([]); CH.e50.setData([]); CH.rs.setData([]); CH.key=""; drawLines(null); return; }
   msg.hidden=true;
   const bars=sp.all, key=k+tf+bars.length+":"+bars[0].t+":"+bars[bars.length-1].t;
   if(key!==CH.key){
@@ -629,7 +702,7 @@ function renderTop(){
   else if(S.err&&S.err.code==="network"){ msg="ما في اتصال بـ Twelve Data هلق. تأكد من الإنترنت، والتطبيق بيرجع يحاول لحاله."; cls="err"; }
   else if(!open){ const ro=reopenAt(); msg="السوق مسكّر للويكند. بيفتح "+fDs.format(new Date(ro))+" الساعة "+fT.format(new Date(ro))+" بتوقيتك. الخطط تحت للجلسة الجاية."; }
   b.hidden=!msg; b.className="banner"+(cls?" "+cls:""); b.textContent=msg;
-  $("setup").hidden=!!tdKey(); $("appBody").hidden=!tdKey();
+  $("setup").hidden=!!tdKey(); $("appBody").classList.toggle("nokey",!tdKey());
 }
 function renderQuote(){ const k=S.inst, I=INST[k], q=S.quotes[k], p=S.plans&&S.plans[S.tf];
   $("qPair").textContent=I.sym+" · "+I.name;
@@ -644,7 +717,7 @@ function renderQuote(){ const k=S.inst, I=INST[k], q=S.quotes[k], p=S.plans&&S.p
 function renderRadar(){ const k=S.inst, I=INST[k], box=$("scards");
   $("minSeg").innerHTML=[40,50,60,70,80].map(v=>'<button type="button" data-min="'+v+'" class="'+(v===S.minStr?"on":"")+'" aria-pressed="'+(v===S.minStr)+'">'+v+'%</button>').join("");
   $("alertTog").checked=!!S.alerts;
-  if(locked(k)){ $("radarPanel").hidden=false; box.innerHTML='<div class="locked" style="grid-column:1/-1"><h2>أسعار '+esc(I.name)+' مش ضمن باقتك</h2><p>الباقة المجانية بـ Twelve Data فيها الذهب بس. النفط (WTI وبرنت) متاح من باقة Grow، ولما ترقّي بيشتغل هون لحاله بدون أي تعديل.</p><p><a href="https://twelvedata.com/pricing" target="_blank" rel="noopener">صفحة الباقات بـ Twelve Data</a></p><p>أخبار النفط وتحليله موجودين تحت بقسم الأخبار.</p></div>'; $("confl").textContent=""; $("radarInfo").textContent=""; $("btnAiBest").disabled=true; return; }
+  if(locked(k)){ $("radarPanel").hidden=false; box.innerHTML='<div class="locked" style="grid-column:1/-1"><h2>أسعار '+esc(I.name)+' مش ضمن باقتك</h2><p>الباقة المجانية بـ Twelve Data فيها الذهب بس. النفط (WTI وبرنت) متاح من باقة Grow، ولما ترقّي بيشتغل هون لحاله بدون أي تعديل.</p><p><a href="https://twelvedata.com/pricing" target="_blank" rel="noopener">صفحة الباقات بـ Twelve Data</a></p><p>شارت النفط اللايف بيطلع تحت من «MT5 لايف» إذا وسيطك بيوفّره، وأخبار النفط وتحليله بقسم الأخبار.</p></div>'; $("confl").textContent=""; $("radarInfo").textContent=""; $("btnAiBest").disabled=true; return; }
   $("btnAiBest").disabled=S.aiBusy;
   const P=S.plans||{}; let best=null;
   TFS.forEach(tf=>{ const p=P[tf]; if(p&&p.dir!=="WAIT"&&(p.status==="active"||p.status==="pending")&&p.score>=S.minStr&&(!best||p.score>P[best].score)) best=tf; });
@@ -718,9 +791,9 @@ function renderCal(){ const ev=((S.news&&S.news.calendar&&S.news.calendar.events
     const tags=(e.assets||[]).map(a=>'<span class="tag">'+(a==="gold"?"ذهب":"نفط")+'</span>').join("");
     h+='<li class="ev'+(e.ms<now?" past":"")+(i===nxt?" next":"")+'"><span class="tm">'+fT.format(d)+'</span><span>'+esc(e.title_ar)+tags+' <span class="imp" aria-label="الأهمية '+e.impact+' من 3">'+imp+'</span></span><span class="cd">'+(e.ms>now?inMins(e.ms):"صدر")+'</span>'+(e.note_ar?'<span class="nt">'+esc(e.note_ar)+'</span>':'')+'</li>'; });
   box.innerHTML=h; }
-function renderSettings(){ $("tdKey").value=tdKey(); $("aiKey").value=String(store.get("gor_ai_key","")||""); $("aiModel").value=aiModel();
+function renderSettings(){ $("tdKey").value=tdKey(); $("aiKey").value=String(store.get("gor_ai_key","")||""); $("aiModel").value=aiModel(); $("mt5Url").value=String(store.get("gor_mt5_url","")||"");
   $("aiNote").textContent=store.get("gor_ai_key","")?"عم يستعمل المفتاح اللي حطيته هون.":store.get("frp_key","")?"عم يستعمل مفتاح Future Radar تلقائياً. إذا بدك مفتاح تاني حطه هون.":"حط مفتاح Anthropic (نفس مفتاح Future Radar) لتشغيل الوكيل. كل تحليل بيكلف سنتات قليلة."; }
-function render(){ renderTop(); if(!tdKey()) return; renderQuote(); renderRadar(); renderPlan(); renderChart(); renderCalc(); }
+function render(){ renderTop(); if(!tdKey()){ renderChart(); return; } renderQuote(); renderRadar(); renderPlan(); renderChart(); renderCalc(); }
 
 /* ================= AI agent ================= */
 function parseJsonLoose(txt){ if(!txt) return null; let s=String(txt).replace(/```(?:json)?/gi,"").trim(); const a=s.indexOf("{"), b=s.lastIndexOf("}"); if(a<0||b<=a) return null; s=s.slice(a,b+1);
@@ -730,7 +803,7 @@ function agentPayload(){ const k=S.inst, I=INST[k], P=S.plans||{}, n=S.news||{},
     timeframes:TFS.map(tf=>{ const p=P[tf]; if(!p) return {tf,available:false}; return {tf,bias:p.bias,signal:p.dir,strength:p.score,status:p.status||"wait",rsi:+p.rsi.toFixed(1),atr:r2(p.atr),ema20:r2(p.e20),ema50:r2(p.e50),macd_hist:r2(p.mh),entry:r2(p.entry),zone:p.zone?p.zone.map(r2):null,sl:r2(p.sl),tp1:r2(p.tp1),tp2:r2(p.tp2),tp3:r2(p.tp3)}; }),
     daily_pivots:P["1D"]&&P["1D"].piv?Object.fromEntries(["R2","R1","P","S1","S2"].map(x=>[x,r2(P["1D"].piv[x])])):null,
     last_candles:(split(k,S.tf)||{all:[]}).all.slice(-12).map(b=>[new Date(b.t).toISOString().slice(5,16),r2(b.o),r2(b.h),r2(b.l),r2(b.c)]),
-    news:n.analysis&&n.analysis[I.news]?{sentiment:n.analysis[I.news].sentiment,headline:n.analysis[I.news].headline,brief:n.analysis[I.news].brief,updated:n.updatedAt}:null,
+    news:n.analysis&&n.analysis[I.news]&&!newsSent(k).stale?{sentiment:n.analysis[I.news].sentiment,headline:n.analysis[I.news].headline,brief:n.analysis[I.news].brief,updated:n.updatedAt}:null,
     upcoming_events:((n.calendar&&n.calendar.events)||[]).filter(e=>(e.assets||[]).includes(I.news)&&Date.parse(e.at)>Date.now()).slice(0,5).map(e=>({at:e.at,title:e.title_ar,impact:e.impact,note:e.note_ar||""})) }; }
 async function askAgent(mode){ const key=aiKey(); if(!key) throw new Error("حط مفتاح Anthropic بالإعدادات (نفس مفتاح Future Radar) لتشغيل الوكيل.");
   const task=mode==="best"?"اختار أحسن فرصة وحدة من الفريمات الستة، أو قول ما في فرصة.":"حلّل الفريم المختار ("+S.tf+") بس، وقرر: شراء أو بيع أو انتظار.";
@@ -754,7 +827,7 @@ function renderAi(o,box){ const I=INST[S.inst], d=I.dec, side=o.side==="long"?"l
     +(o.wait_for?'<p><b>قبل الدخول:</b> '+esc(o.wait_for)+'</p>':'')
     +(side!=="none"?'<button class="btn" type="button" data-draw="1">ارسم على الشارت</button>':'')
     +'<p class="note">الموديل: '+esc(aiModel())+'. رأي الوكيل مساعد، والقرار إلك.</p></div>';
-  const b=box.querySelector("[data-draw]"); if(b) b.onclick=()=>{ if(o.pick&&TF[o.pick]&&o.pick!==S.tf){ setTf(o.pick); } setTimeout(()=>drawAiLines(o),50); document.getElementById("chartBox").scrollIntoView({behavior:"smooth",block:"start"}); }; }
+  const b=box.querySelector("[data-draw]"); if(b) b.onclick=()=>{ if(S.view!=="app") setView("app"); if(o.pick&&TF[o.pick]&&o.pick!==S.tf){ setTf(o.pick); } setTimeout(()=>drawAiLines(o),50); document.getElementById("chartBox").scrollIntoView({behavior:"smooth",block:"start"}); }; }
 async function runAgent(mode){ if(S.aiBusy) return; const box=mode==="best"?$("aiBestRes"):$("aiTfRes"), btn=mode==="best"?$("btnAiBest"):$("btnAiTf");
   S.aiBusy=true; btn.disabled=true; box.innerHTML='<p class="sub"><span class="spin"></span> الوكيل عم يحلّل…</p>';
   try{ const o=await askAgent(mode); renderAi(o,box); }
@@ -768,18 +841,25 @@ function seriesDue(k,tf){ const s=S.series[k][tf], now=Date.now(); if(!s||!s.fet
   if(!marketOpen(now)) return now-s.fetchedAt>6*36e5;
   if(tf==="1D") return now-s.fetchedAt>18e5;
   const last=s.bars[s.bars.length-1]; return !last||now>=last.t+TF[tf].ms+15e3; }
-function tick(){ renderTop(); if(document.hidden||!tdKey()||S.halt>Date.now()) return;
+function tick(){ renderTop(); if(document.hidden) return;
+  if(Date.now()-S.newsAt>6e5) loadNews();
+  if(!tdKey()||S.halt>Date.now()) return;
   const k=S.inst, open=marketOpen();
   if(!locked(k)){ const gap=open?6e4:9e5; if(Date.now()-(S.qAt[k]||0)>gap) loadQuote(k,1);
     [S.tf,"1D",...TFS.filter(t=>t!==S.tf&&t!=="1D")].forEach((tf,i)=>{ if(seriesDue(k,tf)) loadSeries(k,tf,2+i); }); }
   ORDER.forEach(x=>{ if(x===k||locked(x)) return; if(Date.now()-(S.qAt[x]||0)>(open?3e5:18e5)) loadQuote(x,8); });
   if(!oilOk()&&(!S.oil||Date.now()-(S.oil.at||0)>864e5)&&Date.now()-(S.qAt.wti||0)>36e5){ S.qAt.wti=Date.now(); loadQuote("wti",9); }
-  if(Date.now()-S.usageAt>18e5) loadUsage();
-  if(Date.now()-S.newsAt>6e5) loadNews(); }
+  if(Date.now()-S.usageAt>18e5) loadUsage(); }
 function setTf(tf){ if(!TF[tf]) return; S.tf=tf; store.set("gor_tf",tf); clearAi(); checkSignals(); render(); tick(); }
 
 /* ================= events ================= */
-document.addEventListener("click",e=>{ const t=e.target.closest("[data-inst],[data-tf],[data-min],[data-tab],#newsSeg button,#btnSet,#btnAiBest,#btnAiTf,#btnAiClear"); if(!t) return;
+function scrollToChart(){ const tb=document.querySelector(".topbar"), y=$("chartBox").getBoundingClientRect().top+window.scrollY-(tb?tb.offsetHeight:0)-8; window.scrollTo({top:Math.max(0,y),behavior:"smooth"}); }
+document.addEventListener("click",e=>{ const t=e.target.closest("[data-inst],[data-tf],[data-min],[data-tab],[data-view],[data-copy],#newsSeg button,#btnSet,#btnAiBest,#btnAiTf,#btnAiClear,#mt5Full,#mt5Reload,#mt5HintOk"); if(!t) return;
+  if(t.dataset.view){ setView(t.dataset.view); if(S.view==="mt5") scrollToChart(); return; }
+  if(t.id==="mt5HintOk"){ store.set("gor_mt5_ok",true); $("mt5Hint").hidden=true; return; }
+  if(t.dataset.copy){ copyText(t.dataset.copy); return; }
+  if(t.id==="mt5Full"){ setFull(!$("chartBox").classList.contains("full")); return; }
+  if(t.id==="mt5Reload"){ ensureMt5(true); return; }
   if(t.dataset.inst){ if(t.dataset.inst===S.inst) return; S.inst=t.dataset.inst; S.newsTab=INST[S.inst].news; $("cSize").value=store.get("gor_cs_"+S.inst,INST[S.inst].contract); clearAi(); S.plans={}; if(CH) CH.view=""; checkSignals(); render(); renderNews(); tick(); return; }
   if(t.dataset.tf){ setTf(t.dataset.tf); return; }
   if(t.dataset.min){ S.minStr=+t.dataset.min; store.set("gor_min",S.minStr); renderRadar(); return; }
@@ -793,7 +873,11 @@ $("alertTog").addEventListener("change",e=>{ S.alerts=e.target.checked; store.se
 ["cBal","cRisk","cSize"].forEach(id=>$(id).addEventListener("input",()=>{ store.set(id==="cSize"?"gor_cs_"+S.inst:"gor_"+id,$(id).value); renderCalc(); }));
 function saveTdKey(v){ v=String(v||"").trim(); store.set("gor_td_key",v); S.halt=0; S.err=null; S.qAt={}; Object.keys(S.series).forEach(k=>{ S.series[k]={}; }); S.usageAt=0; render(); tick(); }
 $("setupForm").addEventListener("submit",e=>{ e.preventDefault(); const v=$("setupKey").value.trim(); if(!v){ $("setupNote").textContent="الصق المفتاح أول."; return; } saveTdKey(v); });
-$("setForm").addEventListener("submit",e=>{ e.preventDefault(); const nk=$("tdKey").value.trim(); if(nk!==tdKey()) saveTdKey(nk); store.set("gor_ai_key",$("aiKey").value.trim()); store.set("gor_model",$("aiModel").value.trim()); renderSettings(); $("setMsg").textContent="انحفظ ✓"; setTimeout(()=>{ $("setMsg").textContent=""; },2500); });
+$("setForm").addEventListener("submit",e=>{ e.preventDefault();
+  const mu=$("mt5Url").value.trim(); if(mu&&!/^https:\/\/\S+$/i.test(mu)){ $("setMsg").textContent="رابط ميتاتريدر لازم يبلّش بـ https:// وبدون فراغات."; return; }
+  store.set("gor_mt5_url",mu); if(S.view==="mt5") ensureMt5();
+  const nk=$("tdKey").value.trim(); if(nk!==tdKey()) saveTdKey(nk); store.set("gor_ai_key",$("aiKey").value.trim()); store.set("gor_model",$("aiModel").value.trim()); renderSettings(); $("setMsg").textContent="انحفظ ✓"; setTimeout(()=>{ $("setMsg").textContent=""; },2500); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") setFull(false); });
 $("btnTest").addEventListener("click",async()=>{ const m=$("setMsg"); const nk=$("tdKey").value.trim(); if(nk&&nk!==tdKey()) saveTdKey(nk); if(!tdKey()){ m.textContent="حط المفتاح أول."; return; } m.textContent="عم يجرّب…";
   try{ const j=await td("/api_usage",{},0); S.usage={used:+j.current_usage,limit:+j.plan_limit||800}; m.textContent="المفتاح شغّال ✓ · الاستهلاك اليوم "+S.usage.used+" من "+S.usage.limit; renderTop(); }
   catch(e){ m.textContent=e.code==="badkey"?"المفتاح مش صحيح.":e.code==="network"?"ما في اتصال بـ Twelve Data.":"ما زبط: "+(e.message||e.code); } });
